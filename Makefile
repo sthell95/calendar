@@ -28,5 +28,5 @@ test:
 
 lint:
 	@ echo "-> running linters ..."
-	@ golangci-lint run --enable-all ./cmd...
+	@ golangci-lint run --fast ./cmd...
 .PHONY: lint
