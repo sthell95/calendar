@@ -6,7 +6,6 @@ type Options func(opt *Opt)
 
 type Opt struct {
 	Code    int
-	Message string
 	Headers map[string]string
 }
 
@@ -16,22 +15,18 @@ func WithCode(c int) Options {
 	}
 }
 
-func WithMessage(m string) Options {
-	return func(opt *Opt) {
-		opt.Message = m
-	}
-}
-
 func WithHeaders(h map[string]string) Options {
 	return func(opt *Opt) {
 		opt.Headers = h
 	}
 }
 
-func (o *Opt) init() {
-	o.Code = http.StatusOK
-	o.Headers = map[string]string{
-		"Content-Type":           "application/json;charset=utf8",
-		"X-Content-Type-Options": "nosniff",
+func NewOptions() *Opt {
+	return &Opt{
+		Code: http.StatusOK,
+		Headers: map[string]string{
+			"Content-Type":           "application/json;charset=utf8",
+			"X-Content-Type-Options": "nosniff",
+		},
 	}
 }

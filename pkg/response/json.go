@@ -12,7 +12,7 @@ type Response interface {
 type Resp struct{}
 
 func (r *Resp) PrettyPrint(w http.ResponseWriter, o interface{}, i ...Options) {
-	option := &Opt{}
+	option := NewOptions()
 	for key, _ := range i {
 		i[key](option)
 	}
