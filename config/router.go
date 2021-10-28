@@ -8,8 +8,12 @@ import (
 	"github.com/gorilla/mux"
 )
 
+type Handlers interface {
+	HealthHandler(http.ResponseWriter, *http.Request)
+}
+
 func Serve() error {
-	r := NewRouter()
+	r := NewRouter(controller.Client{})
 
 	err := http.ListenAndServe(":8000", r)
 	if err != nil {
@@ -18,10 +22,10 @@ func Serve() error {
 	return nil
 }
 
-func NewRouter() *mux.Router {
+func NewRouter(h Handlers) *mux.Router {
 	r := mux.NewRouter()
 
-	r.HandleFunc("/health_checker", controller.HealthHandler).Methods(http.MethodGet)
+	r.HandleFunc("/health_checker", h.HealthHandler).Methods(http.MethodGet)
 
 	return r
 }

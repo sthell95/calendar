@@ -2,6 +2,8 @@ package logger
 
 import (
 	"bytes"
+	"github.com/stretchr/testify/require"
+	"strings"
 	"testing"
 	"time"
 
@@ -61,13 +63,14 @@ func TestLogWrite(t *testing.T) {
 		b := *bytes.NewBuffer([]byte{})
 		logrus.SetOutput(&b)
 		t.Run(test.name, func(t *testing.T) {
-			log := &Log{}
+			log := NewLogger()
 			log.Write(test.args.level, test.args.message, test.args.code)
 		})
 
-		expect := bytes.TrimRight(b.Bytes(), "\n")
-		if test.want != string(expect) {
-			t.Errorf(test.name + ": failed.\nExpected: " + test.want + "\nGot: " + string(expect))
-		}
+		require.Equal(t, test.want, strings.TrimRight(b.String(), "\n"))
 	}
+
+	t.Run("Timestamp", func(t *testing.T) {
+
+	})
 }
