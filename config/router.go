@@ -1,20 +1,31 @@
 package config
 
 import (
-	"calendar.com/pkg/controller"
-	"fmt"
 	"net/http"
+
+	"calendar.com/pkg/controller"
 
 	"github.com/gorilla/mux"
 )
 
-func Serve() {
-	r := mux.NewRouter()
+type Handlers interface {
+	HealthHandler(http.ResponseWriter, *http.Request)
+}
 
-	r.HandleFunc("/health_checker", controller.HealthHandler).Methods(http.MethodGet)
+func Serve() error {
+	r := NewRouter(controller.Client{})
 
 	err := http.ListenAndServe(":8000", r)
 	if err != nil {
-		panic(fmt.Sprintf("[serve]: %v", err))
+		return err
 	}
+	return nil
+}
+
+func NewRouter(h Handlers) *mux.Router {
+	r := mux.NewRouter()
+
+	r.HandleFunc("/health_checker", h.HealthHandler).Methods(http.MethodGet)
+
+	return r
 }
