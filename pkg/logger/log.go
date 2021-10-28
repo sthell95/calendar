@@ -2,6 +2,7 @@ package logger
 
 import (
 	"fmt"
+
 	"github.com/sirupsen/logrus"
 )
 
@@ -19,9 +20,9 @@ type Logger interface {
 
 type Log struct{}
 
-func (_ *Log) Write(level Level, message string, code string) {
+func (*Log) Write(level Level, message string, code string) {
 	formatter := new(logrus.TextFormatter)
-	formatter.TimestampFormat = "02-01-2006 15:04-05"
+	formatter.TimestampFormat = "02-01-2006 15:04:05"
 	logrus.SetFormatter(formatter)
 	formatter.FullTimestamp = true
 

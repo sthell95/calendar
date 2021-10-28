@@ -1,10 +1,12 @@
 package controller
 
 import (
-	"fmt"
 	"net/http"
+
+	"calendar.com/pkg/response"
 )
 
 func HealthHandler(w http.ResponseWriter, _ *http.Request) {
-	_, _ = fmt.Fprintln(w, "Im alive")
+	r := response.NewPrint()
+	r.PrettyPrint(w, "Im alive")
 }

@@ -13,7 +13,7 @@ type Resp struct{}
 
 func (r *Resp) PrettyPrint(w http.ResponseWriter, o interface{}, i ...Options) {
 	option := NewOptions()
-	for key, _ := range i {
+	for key := range i {
 		i[key](option)
 	}
 
