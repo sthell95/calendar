@@ -3,9 +3,10 @@ package main
 import (
 	"fmt"
 
-	"calendar.com/pkg/logger"
+	"github.com/sirupsen/logrus"
 
 	"calendar.com/config"
+	"calendar.com/pkg/logger"
 )
 
 func main() {
@@ -15,4 +16,6 @@ func main() {
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "serve")
 	}
+
+	logrus.Info("qwerty")
 }

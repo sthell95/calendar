@@ -2,12 +2,12 @@ package logger
 
 import (
 	"bytes"
-	"github.com/stretchr/testify/require"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/require"
 )
 
 func TestLogWrite(t *testing.T) {
@@ -69,8 +69,4 @@ func TestLogWrite(t *testing.T) {
 
 		require.Equal(t, test.want, strings.TrimRight(b.String(), "\n"))
 	}
-
-	t.Run("Timestamp", func(t *testing.T) {
-
-	})
 }
