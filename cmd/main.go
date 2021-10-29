@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	fmt.Println("-> Running repo")
+	fmt.Println("-> Running application")
 
 	err := config.Serve()
 	if err != nil {
