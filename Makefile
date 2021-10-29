@@ -30,3 +30,11 @@ lint:
 	@ echo "-> running linters ..."
 	@ golangci-lint run --fast ./...
 .PHONY: lint
+
+migration:
+ifdef name
+	migrate create -ext sql -dir ./db/migrations -seq $(name)
+else
+	migrate -database postgres://gouser:gopassword@localhost:5432/gotest?sslmode=disable -path ./db/migrations/ up
+endif
+.PHONY: migration
