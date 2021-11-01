@@ -13,12 +13,10 @@ import (
 
 type Handlers interface {
 	HealthHandler(http.ResponseWriter, *http.Request)
-	CreateUser(w http.ResponseWriter, r *http.Request)
 }
 
 func Serve(ctx context.Context, repo user.UserRepository) error {
-
-	r := NewRouter(&controller.Client{Repo: repo})
+	r := NewRouter(&controller.Client{HealthRepository: repo})
 	server := &http.Server{Addr: ":8000", Handler: r}
 
 	go func() {

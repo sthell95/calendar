@@ -9,7 +9,7 @@ import (
 )
 
 type Client struct {
-	Repo user.UserRepository
+	HealthRepository user.UserRepository
 }
 
 func (_ *Client) HealthHandler(w http.ResponseWriter, _ *http.Request) {
