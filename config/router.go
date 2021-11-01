@@ -1,25 +1,32 @@
 package config
 
 import (
+	"context"
 	"net/http"
 
 	"calendar.com/pkg/controller"
 
 	"github.com/gorilla/mux"
+
+	"calendar.com/pkg/entity/user"
 )
 
 type Handlers interface {
 	HealthHandler(http.ResponseWriter, *http.Request)
+	CreateUser(w http.ResponseWriter, r *http.Request)
 }
 
-func Serve() error {
-	r := NewRouter(controller.Client{})
+func Serve(ctx context.Context, repo user.UserRepository) error {
 
-	err := http.ListenAndServe(":8000", r)
-	if err != nil {
-		return err
-	}
-	return nil
+	r := NewRouter(&controller.Client{Repo: repo})
+	server := &http.Server{Addr: ":8000", Handler: r}
+
+	go func() {
+		<-ctx.Done()
+		server.Shutdown(ctx)
+	}()
+
+	return server.ListenAndServe()
 }
 
 func NewRouter(h Handlers) *mux.Router {
