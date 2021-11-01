@@ -10,7 +10,8 @@ import (
 func TestHealthHandler(t *testing.T) {
 	t.Run("Check health", func(t *testing.T) {
 		w := httptest.NewRecorder()
-		Client{}.HealthHandler(w, nil)
+		client := Client{}
+		client.HealthHandler(w, nil)
 		want := `"Im alive"`
 
 		body, _ := io.ReadAll(w.Body)
