@@ -10,7 +10,7 @@ import (
 func TestHealthHandler(t *testing.T) {
 	t.Run("Check health", func(t *testing.T) {
 		w := httptest.NewRecorder()
-		client := Client{}
+		client := Controller{}
 		client.HealthHandler(w, nil)
 		want := `"Im alive"`
 

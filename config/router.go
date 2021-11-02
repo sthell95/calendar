@@ -4,18 +4,16 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/gorilla/mux"
-
 	"calendar.com/pkg/controller"
-	"calendar.com/pkg/entity/user"
+
+	"github.com/gorilla/mux"
 )
 
-type Handlers interface {
-	HealthHandler(http.ResponseWriter, *http.Request)
+type Handlers struct {
+	controller.Controller
 }
 
-func Serve(ctx context.Context, repo user.UserRepository) error {
-	r := NewRouter(&controller.Client{HealthRepository: repo})
+func Run(ctx context.Context, r *mux.Router) error {
 	server := &http.Server{Addr: ":8000", Handler: r}
 
 	go func() {
@@ -26,7 +24,7 @@ func Serve(ctx context.Context, repo user.UserRepository) error {
 	return server.ListenAndServe()
 }
 
-func NewRouter(h Handlers) *mux.Router {
+func (h Handlers) NewRouter() *mux.Router {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/health_checker", h.HealthHandler).Methods(http.MethodGet)

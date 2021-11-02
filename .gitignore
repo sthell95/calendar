@@ -16,3 +16,7 @@ calendar
 # Database
 docker/initdb.d
 docker/database-data
+
+#config
+config/auth/*
+config/*.yml
