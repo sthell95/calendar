@@ -36,6 +36,6 @@ func (r UserRepo) FindByCredentials(c entity.Credentials) (*entity.User, error) 
 	return &u, err
 }
 
-func NewUserRepo(r storage.Repository) *UserRepo {
+func NewUserRepository(r storage.Repository) *UserRepo {
 	return &UserRepo{repo: r}
 }

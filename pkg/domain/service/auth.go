@@ -4,12 +4,16 @@ import (
 	"crypto/sha1"
 	"time"
 
+	"calendar.com/pkg/domain/repository"
+
 	"calendar.com/pkg/logger"
 
 	"github.com/golang-jwt/jwt"
 )
 
-type Auth struct{}
+type AuthService struct {
+	UserRepository repository.UserRepository
+}
 
 type Authorization interface {
 	GenerateJWT(tokenString *string) error
@@ -18,7 +22,7 @@ type Authorization interface {
 
 const salt = "weg2c3928ncy29v2o3c23r29n3"
 
-func (Auth) GenerateJWT(tokenString *string) error {
+func (AuthService) GenerateJWT(tokenString *string) error {
 	token, err := jwt.ParseWithClaims(*tokenString, &jwt.StandardClaims{
 		ExpiresAt: time.Now().Add(time.Hour).Unix(),
 		IssuedAt:  time.Now().Unix(),
@@ -33,10 +37,16 @@ func (Auth) GenerateJWT(tokenString *string) error {
 	return err
 }
 
-func (Auth) GeneratePassword(password string) string {
+func (AuthService) GeneratePassword(password string) string {
 	hash := sha1.New()
 	hash.Write([]byte(password))
 	hash.Sum([]byte(salt))
 
 	return "qwe"
+}
+
+func NewAuthService(repo *repository.Repository) *AuthService {
+	return &AuthService{
+		UserRepository: repository.NewUserRepository(repo.Storage),
+	}
 }

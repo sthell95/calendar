@@ -6,8 +6,6 @@ import (
 	"os"
 	"os/signal"
 
-	"calendar.com/pkg/storage"
-
 	"github.com/spf13/viper"
 
 	"calendar.com/config"
@@ -15,6 +13,7 @@ import (
 	"calendar.com/pkg/domain/repository"
 	"calendar.com/pkg/domain/service"
 	"calendar.com/pkg/logger"
+	"calendar.com/pkg/storage"
 )
 
 func main() {
@@ -34,11 +33,12 @@ func main() {
 	}()
 	db := storage.NewDB(ctx)
 
-	handlers := new(config.Handlers)
 	storages := storage.Storage{Gorm: db}
 	repos := repository.NewRepository(&storages)
 	services := service.NewService(repos)
-	controller.NewController(services)
+	c := controller.NewController(services)
+	handlers := new(config.Handlers)
+	handlers.NewHandler(*c)
 
 	err := config.Run(ctx, handlers.NewRouter())
 	if err != nil {

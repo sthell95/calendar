@@ -7,8 +7,6 @@ import (
 
 	"github.com/golang-jwt/jwt"
 
-	"calendar.com/pkg/domain/repository"
-
 	"calendar.com/pkg/domain/entity"
 	"calendar.com/pkg/domain/service"
 	"calendar.com/pkg/logger"
@@ -19,11 +17,10 @@ type Authorization interface {
 }
 
 type Services struct {
-	service.Auth
-	repo repository.UserRepository
+	service.AuthService
 }
 
-func (s Services) SignIn(w http.ResponseWriter, r *http.Request) {
+func (c Controller) SignIn(w http.ResponseWriter, r *http.Request) {
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "sign-in")
@@ -37,15 +34,16 @@ func (s Services) SignIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = s.repo.FindByCredentials(credential)
+	_, err = c.Services.Authorization.UserRepository.FindByCredentials(credential)
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "sign-in")
 		return
 	}
 
 	tokenString := jwt.SigningMethodHS256.Hash.String()
-	err = s.GenerateJWT(&tokenString)
+	err = c.Services.Authorization.GenerateJWT(&tokenString)
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "sign-in")
+		return
 	}
 }
