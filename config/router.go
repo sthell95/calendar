@@ -4,10 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	"calendar.com/pkg/controller"
-
 	"github.com/gorilla/mux"
 
+	"calendar.com/pkg/controller"
 	"calendar.com/pkg/entity/user"
 )
 
