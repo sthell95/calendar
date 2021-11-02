@@ -19,3 +19,4 @@ docker/database-data
 
 #config
 config/auth/*
+config/*.yml
