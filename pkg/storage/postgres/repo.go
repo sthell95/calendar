@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/gofrs/uuid"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
@@ -13,16 +12,11 @@ import (
 )
 
 type Repository interface {
-	Create(interface{})
-	Delete(id uuid.UUID)
+	Create(interface{}) error
 }
 
-func (r *DB) Create(entity interface{}) {
-	r.db.Create(&entity)
-}
-
-func (r *DB) Delete(id uuid.UUID) {
-	r.db.Delete(id)
+func (r *DB) Create(entity interface{}) error {
+	return r.db.Create(entity).Error
 }
 
 func NewDB(ctx context.Context, url string) *DB {
