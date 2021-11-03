@@ -5,7 +5,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/golang-jwt/jwt"
+	"calendar.com/pkg/response"
 
 	"calendar.com/pkg/domain/entity"
 	"calendar.com/pkg/domain/service"
@@ -34,16 +34,11 @@ func (c Controller) SignIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = c.Services.Authorization.UserRepository.FindByCredentials(credential)
-	if err != nil {
-		logger.NewLogger().Write(logger.Error, err.Error(), "sign-in")
+	if err := c.Services.Authorization.CheckCredentials(credential); err != nil {
+		logger.NewLogger().Write(logger.Error, "Invalid credentials", "sign-in")
 		return
 	}
 
-	tokenString := jwt.SigningMethodHS256.Hash.String()
-	err = c.Services.Authorization.GenerateJWT(&tokenString)
-	if err != nil {
-		logger.NewLogger().Write(logger.Error, err.Error(), "sign-in")
-		return
-	}
+	token, err := c.Services.Authorization.GenerateToken(credential.Login)
+	response.NewPrint().PrettyPrint(w, token)
 }

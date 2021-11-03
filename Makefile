@@ -31,10 +31,10 @@ lint:
 	@ golangci-lint run --fast ./...
 .PHONY: lint
 
-migration:
-ifdef name
-	migrate create -ext sql -dir ./db/migrations -seq $(name)
-else
+migration create:
+	migrate create -ext sql -dir ./db/migrations -seq `date +"%s.%N"` ' * 1000000)/1'
+.PHONY: create
+
+migrate:
 	migrate -database postgres://gouser:gopassword@localhost:5432/gotest?sslmode=disable -path ./db/migrations/ up
-endif
-.PHONY: migration
+.PHONY: migrate

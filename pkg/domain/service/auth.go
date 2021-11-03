@@ -1,14 +1,15 @@
 package service
 
 import (
-	"crypto/sha1"
+	"os"
 	"time"
 
-	"calendar.com/pkg/domain/repository"
-
-	"calendar.com/pkg/logger"
-
 	"github.com/golang-jwt/jwt"
+	"github.com/spf13/viper"
+	"golang.org/x/crypto/bcrypt"
+
+	"calendar.com/pkg/domain/entity"
+	"calendar.com/pkg/domain/repository"
 )
 
 type AuthService struct {
@@ -16,33 +17,47 @@ type AuthService struct {
 }
 
 type Authorization interface {
-	GenerateJWT(tokenString *string) error
-	GeneratePassword(password string) string
+	GenerateToken(login string) (*entity.AuthToken, error)
+	CheckCredentials(entity.Credentials) error
 }
 
-const salt = "weg2c3928ncy29v2o3c23r29n3"
+func (AuthService) GenerateToken(login string) (*entity.AuthToken, error) {
+	expiresAt := time.Now().Add(time.Hour).Unix()
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, entity.CustomClaims{
+		Login: login,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: expiresAt,
+			IssuedAt:  time.Now().Unix(),
+		},
+	})
 
-func (AuthService) GenerateJWT(tokenString *string) error {
-	token, err := jwt.ParseWithClaims(*tokenString, &jwt.StandardClaims{
-		ExpiresAt: time.Now().Add(time.Hour).Unix(),
-		IssuedAt:  time.Now().Unix(),
-	}, nil)
-	if err != nil {
-		logger.NewLogger().Write(logger.Error, err.Error(), "token")
+	ex, _ := os.Executable()
+	privatKeyByte, err := os.ReadFile(ex + viper.GetString("security.private_key"))
+	signedToken, err := token.SignedString(privatKeyByte)
+
+	return &entity.AuthToken{
+		Token:     signedToken,
+		ExpiresAt: expiresAt,
+	}, err
+}
+
+func (s AuthService) CheckCredentials(c entity.Credentials) error {
+	u, err := s.UserRepository.FindOneBy(map[string]interface{}{
+		"login": c.Login,
+	})
+	if err != nil && u == nil {
 		return err
 	}
-	ts, err := token.SigningString()
-	tokenString = &ts
-
-	return err
+	return matchPasswords(c.Password, u.Password)
 }
 
-func (AuthService) GeneratePassword(password string) string {
-	hash := sha1.New()
-	hash.Write([]byte(password))
-	hash.Sum([]byte(salt))
+func hashPassword(password string) (string, error) {
+	hashBytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
+	return string(hashBytes), err
+}
 
-	return "qwe"
+func matchPasswords(hashed, current string) error {
+	return bcrypt.CompareHashAndPassword([]byte(current), []byte(hashed))
 }
 
 func NewAuthService(repo *repository.Repository) *AuthService {

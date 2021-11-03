@@ -11,7 +11,7 @@ import (
 type UserRepository interface {
 	Create(*entity.User) error
 	FindById(uuid.UUID) (*entity.User, error)
-	FindByCredentials(entity.Credentials) (*entity.User, error)
+	FindOneBy(conditions map[string]interface{}) (*entity.User, error)
 }
 
 type UserRepo struct {
@@ -29,11 +29,12 @@ func (r *UserRepo) FindById(id uuid.UUID) (*entity.User, error) {
 	return &u, err
 }
 
-func (r UserRepo) FindByCredentials(c entity.Credentials) (*entity.User, error) {
-	u := entity.User{Login: c.Login}
-	err := r.repo.Find(&u)
-
-	return &u, err
+func (r *UserRepo) FindOneBy(conditions map[string]interface{}) (*entity.User, error) {
+	var u entity.User
+	if err := r.repo.FindOneBy(&u, conditions); err != nil {
+		return nil, err
+	}
+	return &u, nil
 }
 
 func NewUserRepository(r storage.Repository) *UserRepo {

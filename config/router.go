@@ -29,7 +29,7 @@ func (h Handlers) NewRouter() *mux.Router {
 
 	r.HandleFunc("/health_checker", h.HealthHandler).Methods(http.MethodGet)
 
-	r.HandleFunc("/users", h.SignIn).Methods(http.MethodPost)
+	r.HandleFunc("/login", h.SignIn).Methods(http.MethodPost)
 
 	return r
 }
