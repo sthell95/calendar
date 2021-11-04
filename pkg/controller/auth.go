@@ -5,22 +5,16 @@ import (
 	"io"
 	"net/http"
 
-	"calendar.com/pkg/response"
-
 	"calendar.com/pkg/domain/entity"
-	"calendar.com/pkg/domain/service"
 	"calendar.com/pkg/logger"
+	"calendar.com/pkg/response"
 )
 
-type Authorization interface {
-	SignIn(w http.ResponseWriter, r *http.Request)
+type Error struct {
+	Message error `json:"message"`
 }
 
-type Services struct {
-	service.AuthService
-}
-
-func (c Controller) SignIn(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) SignIn(w http.ResponseWriter, r *http.Request) {
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "sign-in")
@@ -31,14 +25,33 @@ func (c Controller) SignIn(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal(data, &credential)
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "sign-in")
+		response.NewPrint().PrettyPrint(
+			w,
+			Error{Message: err},
+			response.WithCode(http.StatusBadRequest),
+		)
 		return
 	}
 
-	if err := c.Services.Authorization.CheckCredentials(credential); err != nil {
-		logger.NewLogger().Write(logger.Error, "Invalid credentials", "sign-in")
+	if err = c.Services.Authorization.CheckCredentials(credential); err != nil {
+		logger.NewLogger().Write(logger.Error, err.Error(), "sign-in")
+		response.NewPrint().PrettyPrint(
+			w,
+			Error{Message: err},
+			response.WithCode(http.StatusBadRequest),
+		)
 		return
 	}
 
 	token, err := c.Services.Authorization.GenerateToken(credential.Login)
+	if err != nil {
+		logger.NewLogger().Write(logger.Error, err.Error(), "sign-in")
+		response.NewPrint().PrettyPrint(
+			w,
+			Error{Message: err},
+			response.WithCode(http.StatusBadRequest),
+		)
+		return
+	}
 	response.NewPrint().PrettyPrint(w, token)
 }

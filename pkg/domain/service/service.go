@@ -3,7 +3,7 @@ package service
 import "calendar.com/pkg/domain/repository"
 
 type Services struct {
-	Authorization *AuthService
+	Authorization Authorization
 }
 
 func NewService(repos *repository.Repository) *Services {

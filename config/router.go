@@ -24,7 +24,7 @@ func Run(ctx context.Context, r *mux.Router) error {
 	return server.ListenAndServe()
 }
 
-func (h Handlers) NewRouter() *mux.Router {
+func (h *Handlers) NewRouter() *mux.Router {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/health_checker", h.HealthHandler).Methods(http.MethodGet)
