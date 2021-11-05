@@ -12,6 +12,18 @@ import (
 	"calendar.com/pkg/domain/repository"
 )
 
+type InvalidCredentials struct{}
+
+func (InvalidCredentials) Error() string {
+	return "Authorization error: Invalid credentials"
+}
+
+type PasswordNotMatched struct{}
+
+func (PasswordNotMatched) Error() string {
+	return "Password doesn't match"
+}
+
 type AuthService struct {
 	UserRepository repository.UserRepository
 }
@@ -45,8 +57,8 @@ func (s AuthService) CheckCredentials(c entity.Credentials) error {
 	u, err := s.UserRepository.FindOneBy(map[string]interface{}{
 		"login": c.Login,
 	})
-	if err != nil && u == nil {
-		return err
+	if err != nil || u == nil {
+		return InvalidCredentials{}
 	}
 	return matchPasswords(c.Password, u.Password)
 }
@@ -57,7 +69,10 @@ func hashPassword(password string) (string, error) {
 }
 
 func matchPasswords(hashed, current string) error {
-	return bcrypt.CompareHashAndPassword([]byte(current), []byte(hashed))
+	if err := bcrypt.CompareHashAndPassword([]byte(current), []byte(hashed)); err != nil {
+		return PasswordNotMatched{}
+	}
+	return nil
 }
 
 func NewAuthService(repo *repository.Repository) *AuthService {

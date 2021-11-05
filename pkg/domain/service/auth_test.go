@@ -14,11 +14,11 @@ import (
 
 func TestAuthService_CheckCredentials(t *testing.T) {
 	tests := []struct {
-		name      string
-		args      entity.Credentials
-		condition map[string]interface{}
-		gotFromDb *entity.User
-		wantErr   error
+		name        string
+		args        entity.Credentials
+		condition   map[string]interface{}
+		gotFromDb   *entity.User
+		wantMessage error
 	}{
 		{
 			name: "Valid",
@@ -33,7 +33,7 @@ func TestAuthService_CheckCredentials(t *testing.T) {
 				Login:    "test",
 				Password: "$2a$04$ESxZs3B48bQwdoWs03A8w.uVgiBZaHAC5Hoj1me9Ru0V/zFM4XIDG",
 			},
-			wantErr: nil,
+			wantMessage: nil,
 		},
 		{
 			name: "Invalid password",
@@ -48,7 +48,7 @@ func TestAuthService_CheckCredentials(t *testing.T) {
 				Login:    "test",
 				Password: "$2a$04$ESxZs3B48bQwdoWs03A8w.uVgiBZaHAC5Hoj1me9Ru0V/zFM4XIDG",
 			},
-			wantErr: errors.New("Authorization error: Passwords don't not matched"),
+			wantMessage: errors.New("Authorization error: Passwords don't not matched"),
 		},
 		{
 			name: "User not found",
@@ -59,8 +59,8 @@ func TestAuthService_CheckCredentials(t *testing.T) {
 			condition: map[string]interface{}{
 				"login": "test",
 			},
-			gotFromDb: nil,
-			wantErr:   errors.New("Authorization error: Invalid credentials"),
+			gotFromDb:   nil,
+			wantMessage: errors.New("Authorization error: Invalid credentials"),
 		},
 	}
 	for _, tt := range tests {
@@ -73,8 +73,8 @@ func TestAuthService_CheckCredentials(t *testing.T) {
 			}
 
 			err := s.CheckCredentials(tt.args)
-			if err != nil && tt.wantErr != nil && err.Error() != tt.wantErr.Error() {
-				t.Errorf("CheckCredentials() error = %v, wantErr %v", err, tt.wantErr)
+			if err != nil && tt.wantMessage != nil && errors.Is(err, tt.wantMessage) {
+				t.Errorf("CheckCredentials() error = %v, wantMessage %v", err, tt.wantMessage)
 			}
 		})
 	}
@@ -113,7 +113,7 @@ func TestAuthService_GenerateToken(t *testing.T) {
 			}
 			got, err := au.GenerateToken(tt.login)
 			if err != tt.wantErr && got == nil {
-				t.Errorf("GenerateToken() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("GenerateToken() error = %v, wantMessage %v", err, tt.wantErr)
 				return
 			}
 		})
@@ -168,7 +168,7 @@ func Test_matchPasswords(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := matchPasswords(tt.args.requested, tt.args.current); (err != nil) != tt.wantErr {
-				t.Errorf("matchPasswords() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("matchPasswords() error = %v, wantMessage %v", err, tt.wantErr)
 			}
 		})
 	}

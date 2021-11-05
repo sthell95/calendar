@@ -11,7 +11,7 @@ import (
 )
 
 type Error struct {
-	Message error `json:"message"`
+	Message string `json:"message"`
 }
 
 func (c *Controller) SignIn(w http.ResponseWriter, r *http.Request) {
@@ -27,7 +27,7 @@ func (c *Controller) SignIn(w http.ResponseWriter, r *http.Request) {
 		logger.NewLogger().Write(logger.Error, err.Error(), "sign-in")
 		response.NewPrint().PrettyPrint(
 			w,
-			Error{Message: err},
+			Error{Message: err.Error()},
 			response.WithCode(http.StatusBadRequest),
 		)
 		return
@@ -37,7 +37,7 @@ func (c *Controller) SignIn(w http.ResponseWriter, r *http.Request) {
 		logger.NewLogger().Write(logger.Error, err.Error(), "sign-in")
 		response.NewPrint().PrettyPrint(
 			w,
-			Error{Message: err},
+			Error{Message: err.Error()},
 			response.WithCode(http.StatusBadRequest),
 		)
 		return
@@ -48,7 +48,7 @@ func (c *Controller) SignIn(w http.ResponseWriter, r *http.Request) {
 		logger.NewLogger().Write(logger.Error, err.Error(), "sign-in")
 		response.NewPrint().PrettyPrint(
 			w,
-			Error{Message: err},
+			Error{Message: err.Error()},
 			response.WithCode(http.StatusBadRequest),
 		)
 		return

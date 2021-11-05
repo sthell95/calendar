@@ -3,47 +3,71 @@ package controller
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
-	"calendar.com/pkg/domain/entity"
-
 	"github.com/golang/mock/gomock"
 
+	"calendar.com/pkg/domain/entity"
 	"calendar.com/pkg/domain/service"
 )
 
 func TestController_SignIn(t *testing.T) {
+	credentials := entity.Credentials{
+		Login:    "login",
+		Password: "testtest",
+	}
 	tests := []struct {
-		name     string
-		services *service.Services
-		args     *entity.Credentials
-		mock     func(*service.MockAuthorization)
-		want     string
+		name        string
+		services    *service.Services
+		mock        func(*service.MockAuthorization, entity.Credentials)
+		wantMessage string
+		wantCode    int
 	}{
 		{
 			name: "Valid",
-			args: &entity.Credentials{
-				Login:    "login",
-				Password: "testtest",
+			mock: func(mock *service.MockAuthorization, creds entity.Credentials) {
+				mock.EXPECT().CheckCredentials(creds).Return(nil).AnyTimes()
+				mock.EXPECT().GenerateToken(creds.Login).Return(&entity.AuthToken{
+					Token:     "token",
+					ExpiresAt: 1,
+				}, nil)
 			},
-			mock: func(mock *service.MockAuthorization) {
-				mock.EXPECT().CheckCredentials(entity.Credentials{}).Return()
+			wantMessage: `{"token":"token","expires_at":1}`,
+			wantCode:    http.StatusOK,
+		},
+		{
+			name: "Invalid credentials",
+			mock: func(mock *service.MockAuthorization, creds entity.Credentials) {
+				e := errors.New("Invalid credentials")
+				mock.EXPECT().CheckCredentials(creds).Return(e).AnyTimes()
 			},
-			want: "",
+			wantMessage: `{"message":"Invalid credentials"}`,
+			wantCode:    http.StatusBadRequest,
+		},
+		{
+			name: "Failed generation token",
+			mock: func(mock *service.MockAuthorization, creds entity.Credentials) {
+				mock.EXPECT().CheckCredentials(creds).Return(nil).AnyTimes()
+				e := errors.New("Couldn't generate token")
+				mock.EXPECT().GenerateToken(creds.Login).Return(nil, e)
+			},
+			wantMessage: `{"message":"Couldn't generate token"}`,
+			wantCode:    http.StatusBadRequest,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			mock := service.NewMockAuthorization(ctrl)
-			tt.mock(mock)
+			tt.mock(mock, credentials)
 
 			w := httptest.NewRecorder()
-			requestBody, _ := json.Marshal(tt.args)
+			requestBody, _ := json.Marshal(credentials)
 			r := httptest.NewRequest(http.MethodPost, "/login", bytes.NewReader(requestBody))
 
 			c := &Controller{
@@ -51,15 +75,13 @@ func TestController_SignIn(t *testing.T) {
 			}
 			c.SignIn(w, r)
 			responseBody, _ := io.ReadAll(w.Body)
-
-			if w.Code != tt.want.Code {
-				t.Errorf("SignIn() failed: Response code: got: %w\n expected %w", w.Code, tt.want.Code)
+			if w.Code != tt.wantCode {
+				t.Errorf("SignIn() failed: Response code: got: %d\n expected %d", w.Code, tt.wantCode)
 			}
 
 			token := strings.Trim(string(responseBody), "\n")
-
-			if token != tt.want {
-				t.Errorf("SignIn() failed: Response code: got: %w\n expected %w", w.Code, tt.want.Code)
+			if token != tt.wantMessage {
+				t.Errorf("SignIn() failed: Response code: got: %v\n expected %v", token, tt.wantMessage)
 			}
 		})
 	}
