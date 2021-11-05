@@ -5,25 +5,16 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/golang-jwt/jwt"
-
-	"calendar.com/pkg/domain/repository"
-
 	"calendar.com/pkg/domain/entity"
-	"calendar.com/pkg/domain/service"
 	"calendar.com/pkg/logger"
+	"calendar.com/pkg/response"
 )
 
-type Authorization interface {
-	SignIn(w http.ResponseWriter, r *http.Request)
+type Error struct {
+	Message string `json:"message"`
 }
 
-type Services struct {
-	service.Auth
-	repo repository.UserRepository
-}
-
-func (s Services) SignIn(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) SignIn(w http.ResponseWriter, r *http.Request) {
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "sign-in")
@@ -34,18 +25,33 @@ func (s Services) SignIn(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal(data, &credential)
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "sign-in")
+		response.NewPrint().PrettyPrint(
+			w,
+			Error{Message: err.Error()},
+			response.WithCode(http.StatusBadRequest),
+		)
 		return
 	}
 
-	_, err = s.repo.FindByCredentials(credential)
-	if err != nil {
+	if err = c.Services.Authorization.CheckCredentials(credential); err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "sign-in")
+		response.NewPrint().PrettyPrint(
+			w,
+			Error{Message: err.Error()},
+			response.WithCode(http.StatusBadRequest),
+		)
 		return
 	}
 
-	tokenString := jwt.SigningMethodHS256.Hash.String()
-	err = s.GenerateJWT(&tokenString)
+	token, err := c.Services.Authorization.GenerateToken(credential.Login)
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "sign-in")
+		response.NewPrint().PrettyPrint(
+			w,
+			Error{Message: err.Error()},
+			response.WithCode(http.StatusBadRequest),
+		)
+		return
 	}
+	response.NewPrint().PrettyPrint(w, token)
 }

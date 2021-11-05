@@ -10,7 +10,7 @@ import (
 )
 
 type Handlers struct {
-	controller.Controller
+	*controller.Controller
 }
 
 func Run(ctx context.Context, r *mux.Router) error {
@@ -24,10 +24,16 @@ func Run(ctx context.Context, r *mux.Router) error {
 	return server.ListenAndServe()
 }
 
-func (h Handlers) NewRouter() *mux.Router {
+func (h *Handlers) NewRouter() *mux.Router {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/health_checker", h.HealthHandler).Methods(http.MethodGet)
 
+	r.HandleFunc("/login", h.SignIn).Methods(http.MethodPost)
+
 	return r
+}
+
+func (h *Handlers) NewHandler(c controller.Controller) {
+	h.Controller = &c
 }
