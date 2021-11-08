@@ -36,7 +36,7 @@ func main() {
 	storages := storage.Storage{Gorm: db}
 	repos := repository.NewRepository(&storages)
 	services := service.NewService(repos)
-	c := controller.NewController(services)
+	c := controller.NewController(services, repos)
 	handlers := new(config.Handlers)
 	handlers.NewHandler(*c)
 

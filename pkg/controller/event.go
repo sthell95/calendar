@@ -1,13 +1,13 @@
 package controller
 
 import (
-	"calendar.com/pkg/domain/entity"
-	"calendar.com/pkg/logger"
 	"encoding/json"
 	"io"
 	"net/http"
-	"strconv"
-	"time"
+
+	"calendar.com/pkg/domain/entity"
+	"calendar.com/pkg/logger"
+	"calendar.com/pkg/response"
 )
 
 func (c *Controller) Create(w http.ResponseWriter, r *http.Request) {
@@ -24,6 +24,11 @@ func (c *Controller) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	timestamp := strconv.ParseInt()
-	t := time.Unix(event.Time, 0)
+	err = c.Repository.Event.Create(&event)
+	if err != nil {
+		logger.NewLogger().Write(logger.Error, err.Error(), "create-event")
+		return
+	}
+
+	response.NewPrint().PrettyPrint(w, event)
 }

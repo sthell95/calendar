@@ -1,6 +1,8 @@
 package service
 
-import "calendar.com/pkg/domain/repository"
+import (
+	"calendar.com/pkg/domain/repository"
+)
 
 type Services struct {
 	Authorization Authorization

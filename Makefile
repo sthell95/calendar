@@ -5,7 +5,7 @@ export DSN=psql://gouser:gopassword@localhost:5432/gotest
 
 up:
 	@ echo "-> running docker"
-	cd docker && docker-compose up -d && CGO_ENABLED=1 go test -race ../cmd...
+	cd docker && docker-compose up -d && CGO_ENABLED=1 go test -race ../...
 .PHONEL: up
 
 down:
