@@ -31,6 +31,8 @@ func (h *Handlers) NewRouter() *mux.Router {
 
 	r.HandleFunc("/login", h.SignIn).Methods(http.MethodPost)
 
+	r.HandleFunc("/events", h.Create).Methods(http.MethodPost)
+
 	return r
 }
 
