@@ -3,6 +3,9 @@ package controller
 import (
 	"encoding/json"
 	"net/http"
+	"time"
+
+	"calendar.com/pkg/domain/entity"
 
 	"calendar.com/pkg/logger"
 	"calendar.com/pkg/response"
@@ -37,7 +40,27 @@ func (c *Controller) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = c.EventService.Create(&event)
+	t, err := time.Parse(entity.ISOLayout, event.Time)
+	if err != nil {
+		logger.NewLogger().Write(logger.Error, err.Error(), "create-event")
+		return
+	}
+
+	d, err := time.ParseDuration(string(event.Duration))
+	if err != nil {
+		logger.NewLogger().Write(logger.Error, err.Error(), "create-event")
+		return
+	}
+	entityEvent := entity.Event{
+		Title:       event.Title,
+		Description: event.Description,
+		Timezone:    event.Timezone,
+		Time:        &t,
+		Duration:    d,
+		User:        entity.User{},
+		Notes:       event.Notes,
+	}
+	err = c.EventService.Create(&entityEvent)
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "create-event")
 		return

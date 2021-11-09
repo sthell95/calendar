@@ -11,6 +11,58 @@ import (
 	gomock "github.com/golang/mock/gomock"
 )
 
+// MockCredentials is a mock of Credentials interface.
+type MockCredentials struct {
+	ctrl     *gomock.Controller
+	recorder *MockCredentialsMockRecorder
+}
+
+// MockCredentialsMockRecorder is the mock recorder for MockCredentials.
+type MockCredentialsMockRecorder struct {
+	mock *MockCredentials
+}
+
+// NewMockCredentials creates a new mock instance.
+func NewMockCredentials(ctrl *gomock.Controller) *MockCredentials {
+	mock := &MockCredentials{ctrl: ctrl}
+	mock.recorder = &MockCredentialsMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockCredentials) EXPECT() *MockCredentialsMockRecorder {
+	return m.recorder
+}
+
+// CheckCredentials mocks base method.
+func (m *MockCredentials) CheckCredentials(arg0 entity.Credentials) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckCredentials", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CheckCredentials indicates an expected call of CheckCredentials.
+func (mr *MockCredentialsMockRecorder) CheckCredentials(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckCredentials", reflect.TypeOf((*MockCredentials)(nil).CheckCredentials), arg0)
+}
+
+// GenerateToken mocks base method.
+func (m *MockCredentials) GenerateToken(arg0 *entity.Credentials) (*entity.AuthToken, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GenerateToken", arg0)
+	ret0, _ := ret[0].(*entity.AuthToken)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GenerateToken indicates an expected call of GenerateToken.
+func (mr *MockCredentialsMockRecorder) GenerateToken(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateToken", reflect.TypeOf((*MockCredentials)(nil).GenerateToken), arg0)
+}
+
 // MockAuthorization is a mock of Authorization interface.
 type MockAuthorization struct {
 	ctrl     *gomock.Controller
@@ -34,31 +86,17 @@ func (m *MockAuthorization) EXPECT() *MockAuthorizationMockRecorder {
 	return m.recorder
 }
 
-// CheckCredentials mocks base method.
-func (m *MockAuthorization) CheckCredentials(arg0 entity.Credentials) error {
+// SignInProcess mocks base method.
+func (m *MockAuthorization) SignInProcess(c *entity.Credentials) (*entity.AuthToken, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CheckCredentials", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// CheckCredentials indicates an expected call of CheckCredentials.
-func (mr *MockAuthorizationMockRecorder) CheckCredentials(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckCredentials", reflect.TypeOf((*MockAuthorization)(nil).CheckCredentials), arg0)
-}
-
-// GenerateToken mocks base method.
-func (m *MockAuthorization) GenerateToken(login string) (*entity.AuthToken, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GenerateToken", login)
+	ret := m.ctrl.Call(m, "SignInProcess", c)
 	ret0, _ := ret[0].(*entity.AuthToken)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GenerateToken indicates an expected call of GenerateToken.
-func (mr *MockAuthorizationMockRecorder) GenerateToken(login interface{}) *gomock.Call {
+// SignInProcess indicates an expected call of SignInProcess.
+func (mr *MockAuthorizationMockRecorder) SignInProcess(c interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateToken", reflect.TypeOf((*MockAuthorization)(nil).GenerateToken), login)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SignInProcess", reflect.TypeOf((*MockAuthorization)(nil).SignInProcess), c)
 }

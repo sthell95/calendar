@@ -30,15 +30,16 @@ type Event struct {
 
 func (ev *Event) Create(e *entity.Event) error {
 
-	return ev.repo.Create(&eventPut{
-		ID:          e.ID,
-		Title:       e.Title,
-		Description: "",
-		Timezone:    "",
-		Time:        nil,
-		Duration:    0,
-		//Notes:       nil,
-	})
+	//return ev.repo.Create(&eventPut{
+	//	ID:          e.ID,
+	//	Title:       e.Title,
+	//	Description: "",
+	//	Timezone:    "",
+	//	Time:        nil,
+	//	Duration:    0,
+	//	//Notes:       nil,
+	//})
+	return nil
 }
 
 func (e *Event) Update(event *entity.Event, id string) (*entity.Event, error) {

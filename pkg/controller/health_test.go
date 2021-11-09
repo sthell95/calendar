@@ -5,6 +5,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestHealthHandler(t *testing.T) {
@@ -16,8 +18,7 @@ func TestHealthHandler(t *testing.T) {
 
 		body, _ := io.ReadAll(w.Body)
 		expect := strings.Trim(string(body), "\n")
-		if expect != want {
-			t.Errorf("Failed Check health\n Expected: " + want + "\n Got: " + string(body))
-		}
+
+		require.Equal(t, expect, want)
 	})
 }
