@@ -27,7 +27,7 @@ func TestAuthService_CheckCredentials(t *testing.T) {
 				Password: "testtest",
 			},
 			condition: map[string]interface{}{
-				"login": "test",
+				"credentials": "test",
 			},
 			gotFromDb: &entity.User{
 				Login:    "test",
@@ -42,13 +42,13 @@ func TestAuthService_CheckCredentials(t *testing.T) {
 				Password: "testtest1",
 			},
 			condition: map[string]interface{}{
-				"login": "test",
+				"credentials": "test",
 			},
 			gotFromDb: &entity.User{
 				Login:    "test",
 				Password: "$2a$04$ESxZs3B48bQwdoWs03A8w.uVgiBZaHAC5Hoj1me9Ru0V/zFM4XIDG",
 			},
-			wantMessage: errors.New("Authorization error: Passwords don't not matched"),
+			wantMessage: errors.New("Credentials error: Passwords don't not matched"),
 		},
 		{
 			name: "User not found",
@@ -57,10 +57,10 @@ func TestAuthService_CheckCredentials(t *testing.T) {
 				Password: "$2a$04$ESxZs3B48bQwdoWs03A8w.uVgiBZaHAC5Hoj1me9Ru0V/zFM4XIDG",
 			},
 			condition: map[string]interface{}{
-				"login": "test",
+				"credentials": "test",
 			},
 			gotFromDb:   nil,
-			wantMessage: errors.New("Authorization error: Invalid credentials"),
+			wantMessage: errors.New("Credentials error: Invalid credentials"),
 		},
 	}
 	for _, tt := range tests {
@@ -82,25 +82,25 @@ func TestAuthService_CheckCredentials(t *testing.T) {
 
 func TestAuthService_GenerateToken(t *testing.T) {
 	tests := []struct {
-		name    string
-		login   string
-		wantErr error
-		config  func()
+		name        string
+		credentials *entity.Credentials
+		wantErr     error
+		config      func()
 	}{
 		{
-			name:    "Valid generate token by login",
-			login:   "test",
-			wantErr: nil,
+			name:        "Valid generate token by credentials",
+			credentials: &entity.Credentials{Login: "test"},
+			wantErr:     nil,
 			config: func() {
 				viper.Set("security.private_key", "./data/test.jwt.key")
 				viper.Set("security.public_key", "./data/test.jwt.key.pub")
 			},
 		},
 		{
-			name:    "JWt keys don't exists",
-			login:   "test",
-			wantErr: errors.New("Could not generate token"),
-			config:  func() {},
+			name:        "JWt keys don't exists",
+			credentials: &entity.Credentials{Login: "test"},
+			wantErr:     errors.New("Could not generate token"),
+			config:      func() {},
 		},
 	}
 	for _, tt := range tests {
@@ -111,7 +111,7 @@ func TestAuthService_GenerateToken(t *testing.T) {
 			au := AuthService{
 				UserRepository: mock,
 			}
-			got, err := au.GenerateToken(tt.login)
+			got, err := au.GenerateToken(tt.credentials)
 			if err != tt.wantErr && got == nil {
 				t.Errorf("GenerateToken() error = %v, wantMessage %v", err, tt.wantErr)
 				return

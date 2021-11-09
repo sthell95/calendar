@@ -10,6 +10,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/golang/mock/gomock"
 
 	"calendar.com/pkg/domain/entity"
@@ -23,7 +25,7 @@ func TestController_SignIn(t *testing.T) {
 	}
 	tests := []struct {
 		name        string
-		services    *service.Services
+		authService *service.Authorization
 		mock        func(*service.MockAuthorization, entity.Credentials)
 		wantMessage string
 		wantCode    int
@@ -31,11 +33,10 @@ func TestController_SignIn(t *testing.T) {
 		{
 			name: "Valid",
 			mock: func(mock *service.MockAuthorization, creds entity.Credentials) {
-				mock.EXPECT().CheckCredentials(creds).Return(nil).AnyTimes()
-				mock.EXPECT().GenerateToken(creds.Login).Return(&entity.AuthToken{
+				mock.EXPECT().SignInProcess(&creds).Return(&entity.AuthToken{
 					Token:     "token",
 					ExpiresAt: 1,
-				}, nil)
+				}, nil).AnyTimes()
 			},
 			wantMessage: `{"token":"token","expires_at":1}`,
 			wantCode:    http.StatusOK,
@@ -44,19 +45,9 @@ func TestController_SignIn(t *testing.T) {
 			name: "Invalid credentials",
 			mock: func(mock *service.MockAuthorization, creds entity.Credentials) {
 				e := errors.New("Invalid credentials")
-				mock.EXPECT().CheckCredentials(creds).Return(e).AnyTimes()
+				mock.EXPECT().SignInProcess(&creds).Return(nil, e).AnyTimes()
 			},
 			wantMessage: `{"message":"Invalid credentials"}`,
-			wantCode:    http.StatusBadRequest,
-		},
-		{
-			name: "Failed generation token",
-			mock: func(mock *service.MockAuthorization, creds entity.Credentials) {
-				mock.EXPECT().CheckCredentials(creds).Return(nil).AnyTimes()
-				e := errors.New("Couldn't generate token")
-				mock.EXPECT().GenerateToken(creds.Login).Return(nil, e)
-			},
-			wantMessage: `{"message":"Couldn't generate token"}`,
 			wantCode:    http.StatusBadRequest,
 		},
 	}
@@ -71,18 +62,14 @@ func TestController_SignIn(t *testing.T) {
 			r := httptest.NewRequest(http.MethodPost, "/login", bytes.NewReader(requestBody))
 
 			c := &Controller{
-				Services: &service.Services{Authorization: mock},
+				EventService: nil,
+				AuthService:  mock,
 			}
 			c.SignIn(w, r)
 			responseBody, _ := io.ReadAll(w.Body)
-			if w.Code != tt.wantCode {
-				t.Errorf("SignIn() failed: Response code: got: %d\n expected %d", w.Code, tt.wantCode)
-			}
-
 			token := strings.Trim(string(responseBody), "\n")
-			if token != tt.wantMessage {
-				t.Errorf("SignIn() failed: Response code: got: %v\n expected %v", token, tt.wantMessage)
-			}
+			require.Equal(t, w.Code, tt.wantCode)
+			require.Equal(t, token, tt.wantMessage)
 		})
 	}
 }

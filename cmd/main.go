@@ -34,11 +34,11 @@ func main() {
 	db := storage.NewDB(ctx)
 
 	storages := storage.Storage{Gorm: db}
-	repos := repository.NewRepository(&storages)
 	eventRepository := repository.NewEventRepository(storages)
 	eventService := service.NewEventService(eventRepository)
-	services := service.NewService(repos)
-	c := controller.NewController(services, repos, &eventService)
+	userRepository := repository.NewUserRepository(storages)
+	authService := service.NewAuthService(userRepository)
+	c := controller.NewController(eventService, authService)
 	handlers := new(config.Handlers)
 	handlers.NewHandler(*c)
 

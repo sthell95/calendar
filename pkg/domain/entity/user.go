@@ -6,7 +6,7 @@ import (
 
 type User struct {
 	ID       uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4()"`
-	Login    string    `gorm:"type:varchar" json:"login"`
-	Password string    `gorm:"type:varchar" json:"password"`
-	Timezone string    `gorm:"type:varchar" json:"timezone"`
+	Login    string    `gorm:"type:varchar"`
+	Password string    `gorm:"type:varchar"`
+	Timezone string    `gorm:"type:varchar"`
 }
