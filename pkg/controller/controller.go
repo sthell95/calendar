@@ -6,13 +6,15 @@ import (
 )
 
 type Controller struct {
-	Services   *service.Services
-	Repository *repository.Repository
+	Services     *service.Services
+	Repository   *repository.Repository
+	EventService service.Event
 }
 
-func NewController(services *service.Services, repos *repository.Repository) *Controller {
+func NewController(services *service.Services, repos *repository.Repository, es service.Event) *Controller {
 	return &Controller{
-		Services:   services,
-		Repository: repos,
+		Services:     services,
+		Repository:   repos,
+		EventService: es,
 	}
 }

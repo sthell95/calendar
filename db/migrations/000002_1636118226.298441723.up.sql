@@ -1,10 +1,10 @@
 CREATE TABLE IF NOT EXISTS events (
     id uuid PRIMARY KEY UNIQUE,
-    title varchar(100),
+    title varchar(100) NOT NULL,
     description text,
     timezone varchar(40) default 'Europe/Riga',
-    date_from timestamp,
-    date_to timestamp,
+    date_from timestamp with time zone NOT NULL ,
+    date_to timestamp with time zone NOT NULL,
     notes varchar ARRAY,
     user_id uuid REFERENCES users(id)
 );

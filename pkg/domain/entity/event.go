@@ -1,27 +1,34 @@
 package entity
 
 import (
-	"strconv"
-	"strings"
 	"time"
+
+	"github.com/gofrs/uuid"
+	"gorm.io/gorm"
+
+	"calendar.com/pkg/logger"
 )
 
 const ISOLayout = "2006-01-02T15:04:05.000Z"
 
 type Event struct {
-	ID          string     `json:"id" gorm:"type:uuid;default:uuid_generate_v4()"`
-	Title       string     `json:"title" gorm:"type:varchar"`
-	Description string     `json:"description" gorm:"type:varchar"`
-	Timezone    string     `json:"timezone" gorm:"type:varchar"`
-	Time        *time.Time `json:"time" gorm:"type:timestamp"`
-	Duration    duration   `json:"duration" gorm:"type:time"`
-	Notes       []string   `json:"notes" gorm:"string[]"`
+	ID          uuid.UUID
+	Title       string
+	Description string
+	Timezone    string
+	Time        *time.Time
+	Duration    time.Duration
+	User        User
+	Notes       []string
 }
 
-type duration int32
-
-func (d *duration) UnmarshalJSON(b []byte) error {
-	dur, _ := strconv.Atoi(strings.Trim(string(b), `"`))
-	*d = duration(dur)
+func (e *Event) BeforeCreate(tx *gorm.DB) error {
+	id, err := uuid.NewV4()
+	if err != nil {
+		logger.NewLogger().Write(logger.Error, err.Error(), "event")
+		return err
+	}
+	tx.Set("ID", id.String())
+	//e.ID = eventId.String()
 	return nil
 }
