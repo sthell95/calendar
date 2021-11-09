@@ -7,15 +7,15 @@ import (
 	"calendar.com/pkg/storage"
 )
 
-type eventPut struct {
-	ID          string     `gorm:"type:uuid;default:uuid_generate_v4()"`
-	Title       string     `gorm:"type:varchar(100);not null"`
-	Description string     `gorm:"type:text"`
-	Timezone    string     `gorm:"type:varchar;default 'Europe/Riga'"`
-	Time        *time.Time `gorm:"type:timestamp; not null"`
-	Duration    int32      `gorm:"type:time not null"`
+type EventPut struct {
+	ID          string        `gorm:"type:uuid;default:uuid_generate_v4()"`
+	Title       string        `gorm:"type:varchar(100);not null"`
+	Description string        `gorm:"type:text"`
+	Timezone    string        `gorm:"type:varchar;default 'Europe/Riga'"`
+	Time        *time.Time    `gorm:"type:timestamp; not null"`
+	Duration    time.Duration `gorm:"type:time not null"`
 	//User        User       `json:"-"`
-	//Notes []Note `gorm:"type:"`
+	Notes []string `gorm:"type:varchar []"`
 }
 
 type EventRepository interface {
@@ -30,16 +30,31 @@ type Event struct {
 
 func (ev *Event) Create(e *entity.Event) error {
 
-	//return ev.repo.Create(&eventPut{
-	//	ID:          e.ID,
-	//	Title:       e.Title,
-	//	Description: "",
-	//	Timezone:    "",
-	//	Time:        nil,
-	//	Duration:    0,
-	//	//Notes:       nil,
-	//})
-	return nil
+	_ = ev.repo.Create(&EventPut{
+		Title:       e.Title,
+		Description: e.Description,
+		Timezone:    e.Timezone,
+		Time:        e.Time,
+		Duration:    e.Duration,
+		Notes:       e.Notes,
+	})
+
+	t := time.Now()
+	m := EventPut{
+		ID:          "d3f09345-e565-416a-ad3a-0f4fe51f8842",
+		Title:       "Some title",
+		Description: "Desfription",
+		Timezone:    "Africa",
+		Time:        &t,
+		Duration:    time.Duration(3600),
+		Notes: []string{
+			"First",
+			"Second",
+			"Last",
+		},
+	}
+
+	return ev.repo.Create(&m)
 }
 
 func (e *Event) Update(event *entity.Event, id string) (*entity.Event, error) {

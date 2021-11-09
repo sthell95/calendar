@@ -20,6 +20,7 @@ type Repository interface {
 }
 
 func (r Storage) Create(entity interface{}) error {
+	//TODO: Need to pass table model
 	return r.Gorm.Create(entity).Error
 }
 

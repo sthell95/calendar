@@ -27,7 +27,7 @@ func TestAuthService_CheckCredentials(t *testing.T) {
 				Password: "testtest",
 			},
 			condition: map[string]interface{}{
-				"credentials": "test",
+				"login": "test",
 			},
 			gotFromDb: &entity.User{
 				Login:    "test",
@@ -42,7 +42,7 @@ func TestAuthService_CheckCredentials(t *testing.T) {
 				Password: "testtest1",
 			},
 			condition: map[string]interface{}{
-				"credentials": "test",
+				"login": "test",
 			},
 			gotFromDb: &entity.User{
 				Login:    "test",
@@ -57,7 +57,7 @@ func TestAuthService_CheckCredentials(t *testing.T) {
 				Password: "$2a$04$ESxZs3B48bQwdoWs03A8w.uVgiBZaHAC5Hoj1me9Ru0V/zFM4XIDG",
 			},
 			condition: map[string]interface{}{
-				"credentials": "test",
+				"login": "test",
 			},
 			gotFromDb:   nil,
 			wantMessage: errors.New("Credentials error: Invalid credentials"),

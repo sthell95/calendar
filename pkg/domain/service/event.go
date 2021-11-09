@@ -14,8 +14,7 @@ type EventService struct {
 }
 
 func (es *EventService) Create(e *entity.Event) error {
-
-	return nil
+	return es.Repository.Create(e)
 }
 
 func NewEventService(repo repository.EventRepository) *EventService {

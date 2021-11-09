@@ -2,6 +2,7 @@ package controller
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -46,7 +47,7 @@ func (c *Controller) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	d, err := time.ParseDuration(string(event.Duration))
+	d, err := time.ParseDuration(fmt.Sprintf("%vs", event.Duration))
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "create-event")
 		return
