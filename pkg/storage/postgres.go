@@ -14,14 +14,17 @@ import (
 )
 
 type Repository interface {
-	Create(interface{}) error
+	Create(interface{}, Model) error
 	FindById(interface{}, uuid.UUID) error
 	FindOneBy(entity interface{}, conditions map[string]interface{}) error
 }
 
-func (r Storage) Create(entity interface{}) error {
-	//TODO: Need to pass table model
-	return r.Gorm.Create(entity).Error
+type Model interface {
+	GetTable() string
+}
+
+func (r Storage) Create(entity interface{}, model Model) error {
+	return r.Gorm.Table(model.GetTable()).Create(entity).Error
 }
 
 func (r Storage) FindById(entity interface{}, id uuid.UUID) error {

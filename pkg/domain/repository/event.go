@@ -15,7 +15,7 @@ type EventPut struct {
 	Time        *time.Time    `gorm:"type:timestamp; not null"`
 	Duration    time.Duration `gorm:"type:time not null"`
 	//User        User       `json:"-"`
-	Notes []string `gorm:"type:varchar []"`
+	Notes []entity.Note `gorm:"foreignKey:EventID"`
 }
 
 type EventRepository interface {
@@ -24,37 +24,24 @@ type EventRepository interface {
 	FindOneById(string) (*entity.Event, error)
 }
 
+type EventModel struct{}
+
 type Event struct {
 	repo storage.Repository
 }
 
 func (ev *Event) Create(e *entity.Event) error {
-
-	_ = ev.repo.Create(&EventPut{
+	t := time.Now()
+	m := EventPut{
 		Title:       e.Title,
 		Description: e.Description,
 		Timezone:    e.Timezone,
-		Time:        e.Time,
+		Time:        &t,
 		Duration:    e.Duration,
 		Notes:       e.Notes,
-	})
-
-	t := time.Now()
-	m := EventPut{
-		ID:          "d3f09345-e565-416a-ad3a-0f4fe51f8842",
-		Title:       "Some title",
-		Description: "Desfription",
-		Timezone:    "Africa",
-		Time:        &t,
-		Duration:    time.Duration(3600),
-		Notes: []string{
-			"First",
-			"Second",
-			"Last",
-		},
 	}
 
-	return ev.repo.Create(&m)
+	return ev.repo.Create(&m, EventModel{})
 }
 
 func (e *Event) Update(event *entity.Event, id string) (*entity.Event, error) {
@@ -69,4 +56,8 @@ func NewEventRepository(repo storage.Repository) *Event {
 	return &Event{
 		repo: repo,
 	}
+}
+
+func (EventModel) GetTable() string {
+	return "events"
 }

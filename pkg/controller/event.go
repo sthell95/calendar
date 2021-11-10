@@ -6,10 +6,11 @@ import (
 	"net/http"
 	"time"
 
+	"calendar.com/pkg/response"
+
 	"calendar.com/pkg/domain/entity"
 
 	"calendar.com/pkg/logger"
-	"calendar.com/pkg/response"
 )
 
 type RequestEvent struct {
@@ -59,7 +60,9 @@ func (c *Controller) Create(w http.ResponseWriter, r *http.Request) {
 		Time:        &t,
 		Duration:    d,
 		User:        entity.User{},
-		Notes:       event.Notes,
+	}
+	for _, v := range event.Notes {
+		entityEvent.Notes = append(entityEvent.Notes, entity.Note{Note: v})
 	}
 	err = c.EventService.Create(&entityEvent)
 	if err != nil {
@@ -67,5 +70,16 @@ func (c *Controller) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.NewPrint().PrettyPrint(w, event)
+	resp := &ResponseEvent{
+		ID:          entityEvent.ID.String(),
+		Title:       entityEvent.Title,
+		Description: entityEvent.Description,
+		Timezone:    entityEvent.Timezone,
+		Time:        entityEvent.Time.Format(entity.ISOLayout),
+		Duration:    int32(entityEvent.Duration.Seconds()),
+	}
+	for _, note := range entityEvent.Notes {
+		resp.Notes = append(resp.Notes, note.Note)
+	}
+	response.NewPrint().PrettyPrint(w, resp)
 }
