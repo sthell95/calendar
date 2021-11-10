@@ -6,11 +6,9 @@ import (
 	"net/http"
 	"time"
 
-	"calendar.com/pkg/response"
-
 	"calendar.com/pkg/domain/entity"
-
 	"calendar.com/pkg/logger"
+	"calendar.com/pkg/response"
 )
 
 type RequestEvent struct {
@@ -39,15 +37,7 @@ func (*RequestEvent) toEntity() entity.Event {
 
 func (c *Controller) Create(w http.ResponseWriter, r *http.Request) {
 	var event RequestEvent
-	token := r.Header.Get("Authorization")
-	err := c.AuthService.IsAuthorized(token)
-	if err != nil {
-		logger.NewLogger().Write(logger.Error, err.Error(), "create-event")
-		response.NewPrint().PrettyPrint(w, Error{Message: err.Error()}, response.WithCode(http.StatusUnauthorized))
-		return
-	}
-
-	err = json.NewDecoder(r.Body).Decode(&event)
+	err := json.NewDecoder(r.Body).Decode(&event)
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "create-event")
 		response.NewPrint().PrettyPrint(w, Error{Message: err.Error()}, response.WithCode(http.StatusBadRequest))

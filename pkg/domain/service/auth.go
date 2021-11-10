@@ -1,6 +1,7 @@
 package service
 
 import (
+	"net/http"
 	"os"
 	"time"
 
@@ -49,7 +50,6 @@ type Credentials interface {
 
 type Authorization interface {
 	SignInProcess(c *entity.Credentials) (*entity.AuthToken, error)
-	IsAuthorized(string) error
 }
 
 func (s *AuthService) SignInProcess(c *entity.Credentials) (*entity.AuthToken, error) {
@@ -118,13 +118,14 @@ func matchPasswords(hashed, current string) error {
 	}
 	return nil
 }
-func (AuthService) IsAuthorized(token string) error {
+func IsAuthorized(r *http.Request) error {
 	privatKeyByte, err := os.ReadFile(viper.GetString("security.private_key"))
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "token")
-		return err
+		return NotAuthorized{}
 	}
 
+	token := r.Header.Get("Authorization")
 	t, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, NotAuthorized{}

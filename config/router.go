@@ -1,6 +1,7 @@
 package config
 
 import (
+	"calendar.com/middleware"
 	"context"
 	"fmt"
 	"log"
@@ -46,23 +47,13 @@ func checkUserRole(next http.Handler) http.Handler {
 
 func (h *Handlers) NewRouter() *mux.Router {
 	r := mux.NewRouter()
-	r.Use(func(next http.Handler) http.Handler {
-		fmt.Println("Check authorization")
-		return next
-	})
-	r.Use(checkUserRole)
-	r.Use(func(next http.Handler) http.Handler {
-		fmt.Println("Check user permissions")
-		return next
-	})
+
+	r.HandleFunc("/login", h.SignIn).Methods(http.MethodPost)
+	r.HandleFunc("/health_checker", h.HealthHandler).Methods(http.MethodGet)
 
 	s := r.PathPrefix("/api").Subrouter()
-
-	s.HandleFunc("/health_checker", h.HealthHandler).Methods(http.MethodGet)
-
-	s.HandleFunc("/login", h.SignIn).Methods(http.MethodPost)
-
 	s.HandleFunc("/events", h.Create).Methods(http.MethodPost)
+	s.Use(middleware.Authorization)
 
 	_ = r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
 		t, err := route.GetPathTemplate()
