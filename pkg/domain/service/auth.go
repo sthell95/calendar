@@ -4,6 +4,8 @@ import (
 	"os"
 	"time"
 
+	"calendar.com/pkg/logger"
+
 	"github.com/golang-jwt/jwt"
 	"github.com/spf13/viper"
 	"golang.org/x/crypto/bcrypt"
@@ -30,6 +32,12 @@ func (Notfound) Error() string {
 	return "User not found"
 }
 
+type NotAuthorized struct{}
+
+func (NotAuthorized) Error() string {
+	return "Not Authorized"
+}
+
 type AuthService struct {
 	UserRepository repository.UserRepository
 }
@@ -41,6 +49,7 @@ type Credentials interface {
 
 type Authorization interface {
 	SignInProcess(c *entity.Credentials) (*entity.AuthToken, error)
+	IsAuthorized(string) error
 }
 
 func (s *AuthService) SignInProcess(c *entity.Credentials) (*entity.AuthToken, error) {
@@ -70,9 +79,17 @@ func (AuthService) GenerateToken(credentials *entity.Credentials) (*entity.AuthT
 		},
 	})
 
-	ex, _ := os.Executable()
-	privatKeyByte, err := os.ReadFile(ex + viper.GetString("security.private_key"))
+	privatKeyByte, err := os.ReadFile(viper.GetString("security.private_key"))
+	if err != nil {
+		logger.NewLogger().Write(logger.Error, err.Error(), "token")
+		return nil, err
+	}
+
 	signedToken, err := token.SignedString(privatKeyByte)
+	if err != nil {
+		logger.NewLogger().Write(logger.Error, err.Error(), "token")
+		return nil, err
+	}
 
 	return &entity.AuthToken{
 		Token:     signedToken,
@@ -99,6 +116,26 @@ func matchPasswords(hashed, current string) error {
 	if err := bcrypt.CompareHashAndPassword([]byte(current), []byte(hashed)); err != nil {
 		return PasswordNotMatched{}
 	}
+	return nil
+}
+func (AuthService) IsAuthorized(token string) error {
+	privatKeyByte, err := os.ReadFile(viper.GetString("security.private_key"))
+	if err != nil {
+		logger.NewLogger().Write(logger.Error, err.Error(), "token")
+		return err
+	}
+
+	t, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, NotAuthorized{}
+		}
+		return privatKeyByte, nil
+	})
+
+	if t == nil || !t.Valid {
+		return NotAuthorized{}
+	}
+
 	return nil
 }
 

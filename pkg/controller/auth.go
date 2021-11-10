@@ -10,10 +10,6 @@ import (
 	"calendar.com/pkg/response"
 )
 
-type Error struct {
-	Message string `json:"message"`
-}
-
 type RequestCredentials struct {
 	Login    string `json:"login"`
 	Password string `json:"password"`

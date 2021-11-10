@@ -9,6 +9,10 @@ type Controller struct {
 	AuthService  service.Authorization
 }
 
+type Error struct {
+	Message string `json:"message"`
+}
+
 func NewController(es service.Event, as service.Authorization) *Controller {
 	return &Controller{
 		EventService: es,
