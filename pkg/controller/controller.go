@@ -5,9 +5,13 @@ import (
 )
 
 type Controller struct {
-	Services *service.Services
+	EventService service.Event
+	AuthService  service.Authorization
 }
 
-func NewController(services *service.Services) *Controller {
-	return &Controller{Services: services}
+func NewController(es service.Event, as service.Authorization) *Controller {
+	return &Controller{
+		EventService: es,
+		AuthService:  as,
+	}
 }

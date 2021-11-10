@@ -15,7 +15,7 @@ import (
 type InvalidCredentials struct{}
 
 func (InvalidCredentials) Error() string {
-	return "Authorization error: Invalid credentials"
+	return "Credentials error: Invalid credentials"
 }
 
 type PasswordNotMatched struct{}
@@ -24,19 +24,46 @@ func (PasswordNotMatched) Error() string {
 	return "Password doesn't match"
 }
 
+type Notfound struct{}
+
+func (Notfound) Error() string {
+	return "User not found"
+}
+
 type AuthService struct {
 	UserRepository repository.UserRepository
 }
 
-type Authorization interface {
-	GenerateToken(login string) (*entity.AuthToken, error)
+type Credentials interface {
+	GenerateToken(*entity.Credentials) (*entity.AuthToken, error)
 	CheckCredentials(entity.Credentials) error
 }
 
-func (AuthService) GenerateToken(login string) (*entity.AuthToken, error) {
+type Authorization interface {
+	SignInProcess(c *entity.Credentials) (*entity.AuthToken, error)
+}
+
+func (s *AuthService) SignInProcess(c *entity.Credentials) (*entity.AuthToken, error) {
+	creds := entity.Credentials{
+		Login:    c.Login,
+		Password: c.Password,
+	}
+	err := s.CheckCredentials(creds)
+	if err != nil {
+		return nil, InvalidCredentials{}
+	}
+
+	token, err := s.GenerateToken(&creds)
+	if err != nil {
+		return nil, PasswordNotMatched{}
+	}
+	return token, nil
+}
+
+func (AuthService) GenerateToken(credentials *entity.Credentials) (*entity.AuthToken, error) {
 	expiresAt := time.Now().Add(time.Hour).Unix()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, entity.CustomClaims{
-		Login: login,
+		Login: credentials.Login,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expiresAt,
 			IssuedAt:  time.Now().Unix(),
@@ -58,7 +85,7 @@ func (s AuthService) CheckCredentials(c entity.Credentials) error {
 		"login": c.Login,
 	})
 	if err != nil || u == nil {
-		return InvalidCredentials{}
+		return Notfound{}
 	}
 	return matchPasswords(c.Password, u.Password)
 }
@@ -75,8 +102,8 @@ func matchPasswords(hashed, current string) error {
 	return nil
 }
 
-func NewAuthService(repo *repository.Repository) *AuthService {
+func NewAuthService(repo repository.UserRepository) *AuthService {
 	return &AuthService{
-		UserRepository: repository.NewUserRepository(repo.Storage),
+		UserRepository: repo,
 	}
 }
