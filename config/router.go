@@ -1,14 +1,12 @@
 package config
 
 import (
-	"calendar.com/middleware"
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 
-	"calendar.com/pkg/domain/entity"
+	"calendar.com/middleware"
 
 	"calendar.com/pkg/controller"
 
@@ -28,21 +26,6 @@ func Run(ctx context.Context, r *mux.Router) error {
 	}()
 
 	return server.ListenAndServe()
-}
-
-func checkUserRole(next http.Handler) http.Handler {
-	fmt.Println("Check user role")
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Do stuff here
-		log.Println("Check user role inside")
-
-		ctx := context.WithValue(r.Context(), "user", "User")
-		ctx2 := context.WithValue(ctx, entity.CtxUserKey2, "User 2")
-		ctx3 := context.WithValue(ctx2, entity.CtxUserKey, "User const")
-		r = r.WithContext(ctx3)
-		// Call the next handler, which can be another middleware in the chain, or the final handler.
-		next.ServeHTTP(w, r)
-	})
 }
 
 func (h *Handlers) NewRouter() *mux.Router {

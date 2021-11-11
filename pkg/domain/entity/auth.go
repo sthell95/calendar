@@ -16,8 +16,3 @@ type CustomClaims struct {
 	Login string
 	jwt.StandardClaims
 }
-
-type key string
-
-const CtxUserKey key = "user"
-const CtxUserKey2 key = "user2"

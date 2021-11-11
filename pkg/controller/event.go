@@ -31,8 +31,43 @@ type ResponseEvent struct {
 	Notes       []string `json:"notes"`
 }
 
-func (*RequestEvent) toEntity() entity.Event {
-	return entity.Event{}
+func (re *RequestEvent) RequestToEntity() (*entity.Event, error) {
+	t, err := time.Parse(entity.ISOLayout, re.Time)
+	if err != nil {
+		return nil, err
+	}
+
+	d, err := time.ParseDuration(fmt.Sprintf("%vs", re.Duration))
+	if err != nil {
+		return nil, err
+	}
+
+	e := &entity.Event{
+		Title:       re.Title,
+		Description: re.Description,
+		Timezone:    re.Timezone,
+		Time:        &t,
+		Duration:    d,
+		User:        entity.User{},
+	}
+	for _, v := range re.Notes {
+		e.Notes = append(e.Notes, entity.Note{Note: v})
+	}
+	return e, nil
+}
+
+func (re *ResponseEvent) EntityToResponse(e entity.Event) {
+	re = &ResponseEvent{
+		ID:          e.ID.String(),
+		Title:       e.Title,
+		Description: e.Description,
+		Timezone:    e.Timezone,
+		Time:        e.Time.Format(entity.ISOLayout),
+		Duration:    int32(e.Duration.Seconds()),
+	}
+	for _, note := range e.Notes {
+		re.Notes = append(re.Notes, note.Note)
+	}
 }
 
 func (c *Controller) Create(w http.ResponseWriter, r *http.Request) {
@@ -44,47 +79,21 @@ func (c *Controller) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	t, err := time.Parse(entity.ISOLayout, event.Time)
+	entityEvent, err := event.RequestToEntity()
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "create-event")
 		response.NewPrint().PrettyPrint(w, Error{Message: err.Error()}, response.WithCode(http.StatusBadRequest))
 		return
 	}
 
-	d, err := time.ParseDuration(fmt.Sprintf("%vs", event.Duration))
-	if err != nil {
-		logger.NewLogger().Write(logger.Error, err.Error(), "create-event")
-		response.NewPrint().PrettyPrint(w, Error{Message: err.Error()}, response.WithCode(http.StatusBadRequest))
-		return
-	}
-	entityEvent := entity.Event{
-		Title:       event.Title,
-		Description: event.Description,
-		Timezone:    event.Timezone,
-		Time:        &t,
-		Duration:    d,
-		User:        entity.User{},
-	}
-	for _, v := range event.Notes {
-		entityEvent.Notes = append(entityEvent.Notes, entity.Note{Note: v})
-	}
-	err = c.EventService.Create(&entityEvent)
+	err = c.EventService.Create(entityEvent)
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "create-event")
 		response.NewPrint().PrettyPrint(w, Error{Message: err.Error()}, response.WithCode(http.StatusBadRequest))
 		return
 	}
 
-	resp := &ResponseEvent{
-		ID:          entityEvent.ID.String(),
-		Title:       entityEvent.Title,
-		Description: entityEvent.Description,
-		Timezone:    entityEvent.Timezone,
-		Time:        entityEvent.Time.Format(entity.ISOLayout),
-		Duration:    int32(entityEvent.Duration.Seconds()),
-	}
-	for _, note := range entityEvent.Notes {
-		resp.Notes = append(resp.Notes, note.Note)
-	}
+	resp := ResponseEvent{}
+	resp.EntityToResponse(*entityEvent)
 	response.NewPrint().PrettyPrint(w, resp)
 }

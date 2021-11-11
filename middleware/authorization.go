@@ -1,8 +1,9 @@
 package middleware
 
 import (
-	"calendar.com/pkg/response"
 	"net/http"
+
+	"calendar.com/pkg/response"
 
 	"calendar.com/pkg/domain/service"
 	"calendar.com/pkg/logger"
@@ -13,7 +14,9 @@ func Authorization(next http.Handler) http.Handler {
 		err := service.IsAuthorized(r)
 		if err != nil {
 			logger.NewLogger().Write(logger.Error, err.Error(), "create-event")
-			response.NewPrint().PrettyPrint(w, service.NotAuthorized{}, response.WithCode(http.StatusUnauthorized))
+			response.NewPrint().PrettyPrint(w, struct {
+				Message string
+			}{Message: err.Error()}, response.WithCode(http.StatusUnauthorized))
 			return
 		}
 

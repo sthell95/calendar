@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"time"
@@ -57,6 +58,8 @@ func (s *AuthService) SignInProcess(c *entity.Credentials) (*entity.AuthToken, e
 		Login:    c.Login,
 		Password: c.Password,
 	}
+	h, _ := hashPassword(creds.Password)
+	fmt.Println(h)
 	err := s.CheckCredentials(creds)
 	if err != nil {
 		return nil, InvalidCredentials{}
