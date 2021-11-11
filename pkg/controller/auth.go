@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"calendar.com/pkg/domain/entity"
-
 	"calendar.com/pkg/logger"
 	"calendar.com/pkg/response"
 )

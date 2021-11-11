@@ -14,8 +14,8 @@ type EventPut struct {
 	Timezone    string        `gorm:"type:varchar;default 'Europe/Riga'"`
 	Time        *time.Time    `gorm:"type:timestamp; not null"`
 	Duration    time.Duration `gorm:"type:time not null"`
-	//User        User       `json:"-"`
-	Notes []entity.Note `gorm:"foreignKey:EventID"`
+	User        User          `json:"-"`
+	Notes       []entity.Note `gorm:"foreignKey:EventID"`
 }
 
 type EventRepository interface {

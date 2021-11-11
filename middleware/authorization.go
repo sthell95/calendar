@@ -1,12 +1,12 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
-
-	"calendar.com/pkg/response"
 
 	"calendar.com/pkg/domain/service"
 	"calendar.com/pkg/logger"
+	"calendar.com/pkg/response"
 )
 
 func Authorization(next http.Handler) http.Handler {
@@ -21,5 +21,11 @@ func Authorization(next http.Handler) http.Handler {
 		}
 
 		next.ServeHTTP(w, r)
+	})
+}
+
+func AuthorizedUserToContext(next http.Handler) http.Handler {
+	return http.Handler(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(context.Background())
 	})
 }
