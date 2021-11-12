@@ -9,9 +9,13 @@ import (
 	"calendar.com/pkg/response"
 )
 
+type CurrentUser string
+
+const UserId CurrentUser = "currentUserId"
+
 func Authorization(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := service.IsAuthorized(r)
+		userId, err := service.Validate(r)
 		if err != nil {
 			logger.NewLogger().Write(logger.Error, err.Error(), "create-event")
 			response.NewPrint().PrettyPrint(w, struct {
@@ -19,13 +23,9 @@ func Authorization(next http.Handler) http.Handler {
 			}{Message: err.Error()}, response.WithCode(http.StatusUnauthorized))
 			return
 		}
+		ctx := context.WithValue(context.Background(), UserId, userId)
+		r = r.WithContext(ctx)
 
 		next.ServeHTTP(w, r)
-	})
-}
-
-func AuthorizedUserToContext(next http.Handler) http.Handler {
-	return http.Handler(func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.WithValue(context.Background())
 	})
 }

@@ -1,11 +1,9 @@
 package repository
 
 import (
-	"github.com/gofrs/uuid"
-
-	"calendar.com/pkg/storage"
-
 	"calendar.com/pkg/domain/entity"
+	"calendar.com/pkg/storage"
+	"github.com/gofrs/uuid"
 )
 
 var _ UserRepository = (*User)(nil)

@@ -4,12 +4,10 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/spf13/viper"
-
-	"github.com/golang/mock/gomock"
-
 	"calendar.com/pkg/domain/entity"
 	"calendar.com/pkg/domain/repository"
+	"github.com/golang/mock/gomock"
+	"github.com/spf13/viper"
 )
 
 func TestAuthService_CheckCredentials(t *testing.T) {
@@ -123,7 +121,6 @@ func TestAuthService_GenerateToken(t *testing.T) {
 func Test_hashPassword(t *testing.T) {
 	t.Run("Hash password", func(t *testing.T) {
 		_, err := hashPassword("some password")
-
 		if err != nil {
 			t.Errorf(err.Error())
 		}

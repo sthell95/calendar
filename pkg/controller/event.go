@@ -1,14 +1,18 @@
 package controller
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
 
+	"calendar.com/middleware"
 	"calendar.com/pkg/domain/entity"
 	"calendar.com/pkg/logger"
 	"calendar.com/pkg/response"
+	"github.com/gofrs/uuid"
 )
 
 type RequestEvent struct {
@@ -31,7 +35,7 @@ type ResponseEvent struct {
 	Notes       []string `json:"notes"`
 }
 
-func (re *RequestEvent) RequestToEntity() (*entity.Event, error) {
+func (re *RequestEvent) RequestToEntity(ctx context.Context) (*entity.Event, error) {
 	t, err := time.Parse(entity.ISOLayout, re.Time)
 	if err != nil {
 		return nil, err
@@ -42,18 +46,25 @@ func (re *RequestEvent) RequestToEntity() (*entity.Event, error) {
 		return nil, err
 	}
 
-	e := &entity.Event{
-		Title:       re.Title,
-		Description: re.Description,
-		Timezone:    re.Timezone,
-		Time:        &t,
-		Duration:    d,
-		User:        entity.User{},
+	if userId, ok := ctx.Value(middleware.UserId).(uuid.UUID); ok {
+		e := &entity.Event{
+			Title:       re.Title,
+			Description: re.Description,
+			Timezone:    re.Timezone,
+			Time:        &t,
+			Duration:    d,
+			User: entity.User{
+				ID: userId,
+			},
+		}
+		for _, v := range re.Notes {
+			e.Notes = append(e.Notes, entity.Note{Note: v})
+		}
+
+		return e, nil
 	}
-	for _, v := range re.Notes {
-		e.Notes = append(e.Notes, entity.Note{Note: v})
-	}
-	return e, nil
+
+	return nil, errors.New("User does not exists in the context")
 }
 
 func (re *ResponseEvent) EntityToResponse(e entity.Event) {
@@ -79,7 +90,7 @@ func (c *Controller) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	entityEvent, err := event.RequestToEntity()
+	entityEvent, err := event.RequestToEntity(r.Context())
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "create-event")
 		response.NewPrint().PrettyPrint(w, Error{Message: err.Error()}, response.WithCode(http.StatusBadRequest))

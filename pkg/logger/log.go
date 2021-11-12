@@ -8,9 +8,11 @@ import (
 
 type Level string
 
-const Error Level = "error"
-const Warning Level = "warning"
-const Info Level = "info"
+const (
+	Error   Level = "error"
+	Warning Level = "warning"
+	Info    Level = "info"
+)
 
 var _ Logger = (*Log)(nil)
 

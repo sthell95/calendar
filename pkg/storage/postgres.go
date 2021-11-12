@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"log"
 
+	"calendar.com/pkg/logger"
 	"github.com/gofrs/uuid"
 	"github.com/spf13/viper"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-
-	"calendar.com/pkg/logger"
 )
 
 type Repository interface {

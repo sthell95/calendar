@@ -7,9 +7,7 @@ import (
 	"strings"
 
 	"calendar.com/middleware"
-
 	"calendar.com/pkg/controller"
-
 	"github.com/gorilla/mux"
 )
 

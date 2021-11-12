@@ -5,16 +5,17 @@ import (
 
 	"calendar.com/pkg/domain/entity"
 	"calendar.com/pkg/storage"
+	"github.com/gofrs/uuid"
 )
 
-type EventPut struct {
+type eventPut struct {
 	ID          string        `gorm:"type:uuid;default:uuid_generate_v4()"`
 	Title       string        `gorm:"type:varchar(100);not null"`
 	Description string        `gorm:"type:text"`
 	Timezone    string        `gorm:"type:varchar;default 'Europe/Riga'"`
 	Time        *time.Time    `gorm:"type:timestamp; not null"`
 	Duration    time.Duration `gorm:"type:time not null"`
-	User        User          `json:"-"`
+	User        uuid.UUID     `gorm:"type:uuid;not null"`
 	Notes       []entity.Note `gorm:"foreignKey:EventID"`
 }
 
@@ -32,13 +33,14 @@ type Event struct {
 
 func (ev *Event) Create(e *entity.Event) error {
 	t := time.Now()
-	m := EventPut{
+	m := eventPut{
 		Title:       e.Title,
 		Description: e.Description,
 		Timezone:    e.Timezone,
 		Time:        &t,
 		Duration:    e.Duration,
 		Notes:       e.Notes,
+		User:        e.User.ID,
 	}
 
 	return ev.repo.Create(&m, EventModel{})
