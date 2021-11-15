@@ -148,9 +148,12 @@ linters-settings:
       - '*.Test'
       - 'example.com/package.ExampleStruct'
 
+
   forbidigo:
     # Forbid the following identifiers (identifiers are written using regexp):
     # Exclude godoc examples from forbidigo checks.  Default is true.
+    forbidigo:
+      - 'fmt\.Print.*'
     exclude_godoc_examples: false
 
   funlen:
@@ -165,7 +168,7 @@ linters-settings:
 
   gocognit:
     # minimal code complexity to report, 30 by default (but we recommend 10-20)
-    min-complexity: 10
+    min-complexity: 20
 
   goconst:
     # minimal length of string constant, 3 by default
@@ -656,6 +659,7 @@ linters:
 #    - varcheck
   enable-all: true
   disable:
+    - forbidigo
     - gocritic
     - prealloc
     - typecheck
@@ -669,6 +673,8 @@ linters:
     - errcheck
     - goconst
     - maligned
+    - paralleltest
+    - testpackage
   disable-all: false
 #  presets:
 #    - bugs

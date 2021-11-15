@@ -29,6 +29,7 @@ func (r *User) FindOneBy(conditions map[string]interface{}) (*entity.User, error
 	if err := r.repo.FindOneBy(&u, conditions); err != nil {
 		return nil, err
 	}
+
 	return &u, nil
 }
 

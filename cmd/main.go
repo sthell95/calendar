@@ -6,13 +6,14 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/spf13/viper"
+
 	"calendar.com/config"
 	"calendar.com/pkg/controller"
 	"calendar.com/pkg/domain/repository"
 	"calendar.com/pkg/domain/service"
 	"calendar.com/pkg/logger"
 	"calendar.com/pkg/storage"
-	"github.com/spf13/viper"
 )
 
 func main() {

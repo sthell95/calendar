@@ -21,6 +21,7 @@ func Authorization(next http.Handler) http.Handler {
 			response.NewPrint().PrettyPrint(w, struct {
 				Message string
 			}{Message: err.Error()}, response.WithCode(http.StatusUnauthorized))
+
 			return
 		}
 		ctx := context.WithValue(context.Background(), UserId, userId)

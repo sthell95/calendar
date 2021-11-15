@@ -29,6 +29,7 @@ func (*Log) Write(level Level, message string, code string) {
 	formatter.FullTimestamp = true
 
 	message = fmt.Sprintf("[%s] %s", code, message)
+
 	switch level {
 	case Error:
 		logrus.Error(message)

@@ -43,12 +43,14 @@ func NewDB(ctx context.Context) *gorm.DB {
 
 	go func() {
 		<-ctx.Done()
+
 		sqlDB, err := db.DB()
 		if err != nil {
 			panic(err)
 		}
 		fmt.Println("Close", sqlDB.Close())
 	}()
+
 	logger.NewLogger().Write(logger.Info, "Postgre connection created", "db")
 
 	return db

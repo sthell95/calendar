@@ -13,6 +13,7 @@ func TestResp_PrettyPrint(t *testing.T) {
 		o interface{}
 		i []Options
 	}
+
 	tests := []struct {
 		name string
 		args args
