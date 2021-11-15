@@ -4,10 +4,13 @@ import (
 	"errors"
 	"testing"
 
-	"calendar.com/pkg/domain/entity"
-	"calendar.com/pkg/domain/repository"
+	"github.com/stretchr/testify/require"
+
 	"github.com/golang/mock/gomock"
 	"github.com/spf13/viper"
+
+	"calendar.com/pkg/domain/entity"
+	"calendar.com/pkg/domain/repository"
 )
 
 func TestAuthService_CheckCredentials(t *testing.T) {
@@ -17,6 +20,7 @@ func TestAuthService_CheckCredentials(t *testing.T) {
 		condition   map[string]interface{}
 		gotFromDb   *entity.User
 		wantMessage error
+		wantStruct  *entity.User
 	}{
 		{
 			name: "Valid",
@@ -32,6 +36,10 @@ func TestAuthService_CheckCredentials(t *testing.T) {
 				Password: "$2a$04$ESxZs3B48bQwdoWs03A8w.uVgiBZaHAC5Hoj1me9Ru0V/zFM4XIDG",
 			},
 			wantMessage: nil,
+			wantStruct: &entity.User{
+				Login:    "",
+				Password: "",
+			},
 		},
 		{
 			name: "Invalid password",
@@ -46,7 +54,7 @@ func TestAuthService_CheckCredentials(t *testing.T) {
 				Login:    "test",
 				Password: "$2a$04$ESxZs3B48bQwdoWs03A8w.uVgiBZaHAC5Hoj1me9Ru0V/zFM4XIDG",
 			},
-			wantMessage: errors.New("Credentials error: Passwords don't not matched"),
+			wantMessage: errors.New("Password doesn't match"),
 		},
 		{
 			name: "User not found",
@@ -58,7 +66,7 @@ func TestAuthService_CheckCredentials(t *testing.T) {
 				"login": "test",
 			},
 			gotFromDb:   nil,
-			wantMessage: errors.New("Credentials error: Invalid credentials"),
+			wantMessage: errors.New("User not found"),
 		},
 	}
 	for _, tt := range tests {
@@ -70,9 +78,9 @@ func TestAuthService_CheckCredentials(t *testing.T) {
 				UserRepository: mockUserRepository,
 			}
 
-			err := s.CheckCredentials(tt.args)
-			if err != nil && tt.wantMessage != nil && errors.Is(err, tt.wantMessage) {
-				t.Errorf("CheckCredentials() error = %v, wantMessage %v", err, tt.wantMessage)
+			_, err := s.CheckCredentials(tt.args)
+			if err != nil {
+				require.EqualError(t, err, tt.wantMessage.Error())
 			}
 		})
 	}
@@ -81,13 +89,13 @@ func TestAuthService_CheckCredentials(t *testing.T) {
 func TestAuthService_GenerateToken(t *testing.T) {
 	tests := []struct {
 		name        string
-		credentials *entity.Credentials
+		credentials *entity.User
 		wantErr     error
 		config      func()
 	}{
 		{
 			name:        "Valid generate token by credentials",
-			credentials: &entity.Credentials{Login: "test"},
+			credentials: &entity.User{Login: "test"},
 			wantErr:     nil,
 			config: func() {
 				viper.Set("security.private_key", "./data/test.jwt.key")
@@ -96,7 +104,7 @@ func TestAuthService_GenerateToken(t *testing.T) {
 		},
 		{
 			name:        "JWt keys don't exists",
-			credentials: &entity.Credentials{Login: "test"},
+			credentials: &entity.User{Login: "test"},
 			wantErr:     errors.New("Could not generate token"),
 			config:      func() {},
 		},

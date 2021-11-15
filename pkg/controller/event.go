@@ -8,11 +8,12 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gofrs/uuid"
+
 	"calendar.com/middleware"
 	"calendar.com/pkg/domain/entity"
 	"calendar.com/pkg/logger"
 	"calendar.com/pkg/response"
-	"github.com/gofrs/uuid"
 )
 
 type RequestEvent struct {
@@ -67,7 +68,7 @@ func (re *RequestEvent) RequestToEntity(ctx context.Context) (*entity.Event, err
 	return nil, errors.New("User does not exists in the context")
 }
 
-func (re *ResponseEvent) EntityToResponse(e entity.Event) {
+func (re *ResponseEvent) EntityToResponse(e entity.Event) *ResponseEvent {
 	re = &ResponseEvent{
 		ID:          e.ID.String(),
 		Title:       e.Title,
@@ -79,6 +80,8 @@ func (re *ResponseEvent) EntityToResponse(e entity.Event) {
 	for _, note := range e.Notes {
 		re.Notes = append(re.Notes, note.Note)
 	}
+
+	return re
 }
 
 func (c *Controller) Create(w http.ResponseWriter, r *http.Request) {
@@ -104,7 +107,7 @@ func (c *Controller) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := ResponseEvent{}
-	resp.EntityToResponse(*entityEvent)
+	re := ResponseEvent{}
+	resp := re.EntityToResponse(*entityEvent)
 	response.NewPrint().PrettyPrint(w, resp)
 }

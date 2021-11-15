@@ -1,6 +1,8 @@
 package service
 
 import (
+	"github.com/gofrs/uuid"
+
 	"calendar.com/pkg/domain/entity"
 	"calendar.com/pkg/domain/repository"
 )
@@ -14,7 +16,9 @@ type EventService struct {
 }
 
 func (es *EventService) Create(e *entity.Event) error {
-	return es.Repository.Create(e)
+	eventPut, err := es.Repository.Create(e)
+	e.ID = uuid.FromStringOrNil(eventPut.ID)
+	return err
 }
 
 func NewEventService(repo repository.EventRepository) *EventService {

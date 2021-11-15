@@ -3,9 +3,10 @@ package repository
 import (
 	"time"
 
+	"github.com/gofrs/uuid"
+
 	"calendar.com/pkg/domain/entity"
 	"calendar.com/pkg/storage"
-	"github.com/gofrs/uuid"
 )
 
 type eventPut struct {
@@ -20,7 +21,7 @@ type eventPut struct {
 }
 
 type EventRepository interface {
-	Create(event *entity.Event) error
+	Create(event *entity.Event) (*eventPut, error)
 	Update(event *entity.Event, id string) (*entity.Event, error)
 	FindOneById(string) (*entity.Event, error)
 }
@@ -31,9 +32,9 @@ type Event struct {
 	repo storage.Repository
 }
 
-func (ev *Event) Create(e *entity.Event) error {
+func (ev *Event) Create(e *entity.Event) (*eventPut, error) {
 	t := time.Now()
-	m := eventPut{
+	m := &eventPut{
 		Title:       e.Title,
 		Description: e.Description,
 		Timezone:    e.Timezone,
@@ -43,7 +44,12 @@ func (ev *Event) Create(e *entity.Event) error {
 		User:        e.User.ID,
 	}
 
-	return ev.repo.Create(&m, EventModel{})
+	err := ev.repo.Create(m, EventModel{})
+	if err != nil {
+		return nil, err
+	}
+
+	return m, nil
 }
 
 func (e *Event) Update(event *entity.Event, id string) (*entity.Event, error) {
