@@ -68,20 +68,17 @@ func (re *RequestEvent) RequestToEntity(ctx context.Context) (*entity.Event, err
 	return nil, errors.New("User does not exists in the context")
 }
 
-func (re *ResponseEvent) EntityToResponse(e entity.Event) *ResponseEvent {
-	re = &ResponseEvent{
-		ID:          e.ID.String(),
-		Title:       e.Title,
-		Description: e.Description,
-		Timezone:    e.Timezone,
-		Time:        e.Time.Format(entity.ISOLayout),
-		Duration:    int32(e.Duration.Seconds()),
-	}
+func (re *ResponseEvent) EntityToResponse(e entity.Event) {
+	re.ID = e.ID.String()
+	re.Title = e.Title
+	re.Description = e.Description
+	re.Timezone = e.Timezone
+	re.Time = e.Time.Format(entity.ISOLayout)
+	re.Duration = int32(e.Duration.Seconds())
+
 	for _, note := range e.Notes {
 		re.Notes = append(re.Notes, note.Note)
 	}
-
-	return re
 }
 
 func (c *Controller) Create(w http.ResponseWriter, r *http.Request) {
@@ -107,7 +104,7 @@ func (c *Controller) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	re := ResponseEvent{}
-	resp := re.EntityToResponse(*entityEvent)
-	response.NewPrint().PrettyPrint(w, resp)
+	re := &ResponseEvent{}
+	re.EntityToResponse(*entityEvent)
+	response.NewPrint().PrettyPrint(w, re)
 }
