@@ -3,7 +3,6 @@ package controller
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -36,6 +35,12 @@ type ResponseEvent struct {
 	Notes       []string `json:"notes"`
 }
 
+type ErrorUserContext struct{}
+
+func (*ErrorUserContext) Error() string {
+	return "User does not exists in the context"
+}
+
 func (re *RequestEvent) RequestToEntity(ctx context.Context) (*entity.Event, error) {
 	t, err := time.Parse(entity.ISOLayout, re.Time)
 	if err != nil {
@@ -48,7 +53,7 @@ func (re *RequestEvent) RequestToEntity(ctx context.Context) (*entity.Event, err
 	}
 
 	if userId, ok := ctx.Value(middleware.UserId).(uuid.UUID); ok {
-		e := &entity.Event{
+		e := entity.Event{
 			Title:       re.Title,
 			Description: re.Description,
 			Timezone:    re.Timezone,
@@ -58,14 +63,15 @@ func (re *RequestEvent) RequestToEntity(ctx context.Context) (*entity.Event, err
 				ID: userId,
 			},
 		}
-		for _, v := range re.Notes {
-			e.Notes = append(e.Notes, entity.Note{Note: v})
+		e.Notes = make([]entity.Note, len(re.Notes), len(re.Notes))
+		for i, v := range re.Notes {
+			e.Notes[i] = entity.Note{Note: v}
 		}
 
-		return e, nil
+		return &e, nil
 	}
 
-	return nil, errors.New("User does not exists in the context")
+	return nil, &ErrorUserContext{}
 }
 
 func (re *ResponseEvent) EntityToResponse(e entity.Event) {

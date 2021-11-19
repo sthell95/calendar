@@ -5,12 +5,14 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gofrs/uuid"
 
@@ -133,46 +135,125 @@ func TestController_Create(t *testing.T) {
 }
 
 func TestRequestEvent_RequestToEntity(t *testing.T) {
-	type fields struct {
-		ID          string
-		Title       string
-		Description string
-		Timezone    string
-		Time        string
-		Duration    int32
-		Notes       []string
-	}
-	type args struct {
-		ctx context.Context
-	}
 	tests := []struct {
 		name    string
-		fields  fields
-		args    args
-		want    *entity.Event
-		wantErr bool
+		fields  func(time.Time) *RequestEvent
+		ctx     func() *context.Context
+		want    func() *entity.Event
+		wantErr error
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Valid",
+			fields: func(t time.Time) *RequestEvent {
+				return &RequestEvent{
+					Title:       "Test title",
+					Description: "description",
+					Timezone:    "America/Chicago",
+					Time:        "2021-12-10T15:04:05.000Z",
+					Duration:    3600,
+					Notes: []string{
+						"First", "Second", "Last",
+					},
+				}
+			},
+			ctx: func() *context.Context {
+				id, _ := uuid.FromString("62b45338-ea71-4eaa-b5dd-0b29c752ad1c")
+				ctx := context.WithValue(context.Background(), middleware.UserId, id)
+				return &ctx
+			},
+			want: func() *entity.Event {
+				t, _ := time.Parse(entity.ISOLayout, "2021-12-10T15:04:05.000Z")
+				d, _ := time.ParseDuration(fmt.Sprintf("%vs", 3600))
+				id, _ := uuid.FromString("62b45338-ea71-4eaa-b5dd-0b29c752ad1c")
+				return &entity.Event{
+					Title:       "Test title",
+					Description: "description",
+					Timezone:    "America/Chicago",
+					Time:        &t,
+					Duration:    d,
+					User: entity.User{
+						ID: id,
+					},
+					Notes: []entity.Note{
+						{Note: "First"},
+						{Note: "Second"},
+						{Note: "Last"},
+					},
+				}
+			},
+			wantErr: nil,
+		},
+		{
+			name: "Parse time error",
+			fields: func(t time.Time) *RequestEvent {
+				return &RequestEvent{Time: "2021"}
+			},
+			ctx: func() *context.Context {
+				ctx := context.Background()
+				return &ctx
+			},
+			want: func() *entity.Event {
+				return nil
+			},
+			wantErr: &time.ParseError{},
+		},
+		{
+			name: "Parse duration error",
+			fields: func(t time.Time) *RequestEvent {
+				return &RequestEvent{
+					Title:       "Test title",
+					Description: "description",
+					Timezone:    "America/Chicago",
+					Duration:    -1,
+					Notes:       []string{"First", "Second", "Last"},
+				}
+			},
+			ctx: func() *context.Context {
+				id, _ := uuid.FromString("62b45338-ea71-4eaa-b5dd-0b29c752ad1c")
+				ctx := context.WithValue(context.Background(), middleware.UserId, id)
+				return &ctx
+			},
+			want: func() *entity.Event {
+				return nil
+			},
+			wantErr: &time.ParseError{},
+		},
+		{
+			name: "Invalid context",
+			fields: func(t time.Time) *RequestEvent {
+				return &RequestEvent{
+					Title:       "Test title",
+					Description: "description",
+					Timezone:    "America/Chicago",
+					Time:        "2021-12-10T15:04:05.000Z",
+					Duration:    3600,
+					Notes: []string{
+						"First", "Second", "Last",
+					},
+				}
+			},
+			ctx: func() *context.Context {
+				ctx := context.Background()
+				return &ctx
+			},
+			want: func() *entity.Event {
+				return nil
+			},
+			wantErr: &ErrorUserContext{},
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			re := &RequestEvent{
-				ID:          tt.fields.ID,
-				Title:       tt.fields.Title,
-				Description: tt.fields.Description,
-				Timezone:    tt.fields.Timezone,
-				Time:        tt.fields.Time,
-				Duration:    tt.fields.Duration,
-				Notes:       tt.fields.Notes,
+			eventTime := time.Now().Add(time.Hour)
+			re := tt.fields(eventTime)
+			got, err := re.RequestToEntity(*tt.ctx())
+			if err != nil {
+				require.ErrorAs(t, err, &tt.wantErr)
 			}
-			got, err := re.RequestToEntity(tt.args.ctx)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("RequestToEntity() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("RequestToEntity() got = %v, want %v", got, tt.want)
-			}
+
+			isEqual := reflect.DeepEqual(got, tt.want())
+			require.Equal(t, isEqual, true)
 		})
 	}
 }
@@ -187,32 +268,50 @@ func TestResponseEvent_EntityToResponse(t *testing.T) {
 		Duration    int32
 		Notes       []string
 	}
-	type args struct {
-		e entity.Event
-	}
 	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   *ResponseEvent
+		name        string
+		fields      fields
+		eventEntity func() *entity.Event
+		want        *ResponseEvent
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Valid",
+			eventEntity: func() *entity.Event {
+				id, _ := uuid.FromString("62b45338-ea71-4eaa-b5dd-0b29c752ad1c")
+				t, _ := time.Parse(entity.ISOLayout, "2021-12-10T15:04:05.000Z")
+				d, _ := time.ParseDuration(fmt.Sprintf("%vs", 3600))
+				return &entity.Event{
+					ID:          id,
+					Title:       "Test",
+					Description: "test description",
+					Timezone:    "America/Chicago",
+					Time:        &t,
+					Duration:    d,
+					User:        entity.User{},
+					Notes: []entity.Note{
+						{Note: "First"},
+						{Note: "Second"},
+						{Note: "Last"},
+					},
+				}
+			},
+			want: &ResponseEvent{
+				ID:          "62b45338-ea71-4eaa-b5dd-0b29c752ad1c",
+				Title:       "Test",
+				Description: "test description",
+				Timezone:    "America/Chicago",
+				Time:        "2021-12-10T15:04:05.000Z",
+				Duration:    3600,
+				Notes:       []string{"First", "Second", "Last"},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			re := &ResponseEvent{
-				ID:          tt.fields.ID,
-				Title:       tt.fields.Title,
-				Description: tt.fields.Description,
-				Timezone:    tt.fields.Timezone,
-				Time:        tt.fields.Time,
-				Duration:    tt.fields.Duration,
-				Notes:       tt.fields.Notes,
-			}
-			re.EntityToResponse(tt.args.e)
-			//if got := re.EntityToResponse(tt.args.e); !reflect.DeepEqual(got, tt.want) {
-			//	t.Errorf("EntityToResponse() = %v, want %v", got, tt.want)
-			//}
+			re := &ResponseEvent{}
+			re.EntityToResponse(*tt.eventEntity())
+
+			require.Equal(t, tt.want, re)
 		})
 	}
 }
