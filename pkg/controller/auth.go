@@ -5,14 +5,9 @@ import (
 	"net/http"
 
 	"calendar.com/pkg/domain/entity"
-
 	"calendar.com/pkg/logger"
 	"calendar.com/pkg/response"
 )
-
-type Error struct {
-	Message string `json:"message"`
-}
 
 type RequestCredentials struct {
 	Login    string `json:"login"`

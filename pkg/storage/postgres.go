@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"log"
 
+	"calendar.com/pkg/logger"
 	"github.com/gofrs/uuid"
 	"github.com/spf13/viper"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-
-	"calendar.com/pkg/logger"
 )
 
 type Repository interface {
@@ -44,12 +43,14 @@ func NewDB(ctx context.Context) *gorm.DB {
 
 	go func() {
 		<-ctx.Done()
+
 		sqlDB, err := db.DB()
 		if err != nil {
 			panic(err)
 		}
 		fmt.Println("Close", sqlDB.Close())
 	}()
+
 	logger.NewLogger().Write(logger.Info, "Postgre connection created", "db")
 
 	return db

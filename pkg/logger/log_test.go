@@ -16,6 +16,7 @@ func TestLogWrite(t *testing.T) {
 		message string
 		code    string
 	}
+
 	tests := []struct {
 		name string
 		args args

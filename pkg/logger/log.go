@@ -8,9 +8,11 @@ import (
 
 type Level string
 
-const Error Level = "error"
-const Warning Level = "warning"
-const Info Level = "info"
+const (
+	Error   Level = "error"
+	Warning Level = "warning"
+	Info    Level = "info"
+)
 
 var _ Logger = (*Log)(nil)
 
@@ -27,6 +29,7 @@ func (*Log) Write(level Level, message string, code string) {
 	formatter.FullTimestamp = true
 
 	message = fmt.Sprintf("[%s] %s", code, message)
+
 	switch level {
 	case Error:
 		logrus.Error(message)

@@ -3,19 +3,21 @@ package repository
 import (
 	"time"
 
+	"github.com/gofrs/uuid"
+
 	"calendar.com/pkg/domain/entity"
 	"calendar.com/pkg/storage"
 )
 
-type EventPut struct {
+type eventPut struct {
 	ID          string        `gorm:"type:uuid;default:uuid_generate_v4()"`
 	Title       string        `gorm:"type:varchar(100);not null"`
 	Description string        `gorm:"type:text"`
 	Timezone    string        `gorm:"type:varchar;default 'Europe/Riga'"`
 	Time        *time.Time    `gorm:"type:timestamp; not null"`
 	Duration    time.Duration `gorm:"type:time not null"`
-	//User        User       `json:"-"`
-	Notes []entity.Note `gorm:"foreignKey:EventID"`
+	User        uuid.UUID     `gorm:"type:uuid;not null"`
+	Notes       []entity.Note `gorm:"foreignKey:EventID"`
 }
 
 type EventRepository interface {
@@ -32,16 +34,23 @@ type Event struct {
 
 func (ev *Event) Create(e *entity.Event) error {
 	t := time.Now()
-	m := EventPut{
+	m := &eventPut{
 		Title:       e.Title,
 		Description: e.Description,
 		Timezone:    e.Timezone,
 		Time:        &t,
 		Duration:    e.Duration,
 		Notes:       e.Notes,
+		User:        e.User.ID,
 	}
 
-	return ev.repo.Create(&m, EventModel{})
+	err := ev.repo.Create(m, EventModel{})
+	if err != nil {
+		return err
+	}
+
+	e.ID = uuid.FromStringOrNil(m.ID)
+	return nil
 }
 
 func (e *Event) Update(event *entity.Event, id string) (*entity.Event, error) {

@@ -20,8 +20,8 @@ func (r *Resp) PrettyPrint(w http.ResponseWriter, o interface{}, i ...Options) {
 	for key, value := range option.Headers {
 		w.Header().Set(key, value)
 	}
-	w.WriteHeader(option.Code)
 
+	w.WriteHeader(option.Code)
 	_ = json.NewEncoder(w).Encode(o)
 }
 

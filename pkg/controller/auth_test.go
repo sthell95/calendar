@@ -10,12 +10,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
-	"github.com/golang/mock/gomock"
-
 	"calendar.com/pkg/domain/entity"
 	"calendar.com/pkg/domain/service"
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestController_SignIn(t *testing.T) {

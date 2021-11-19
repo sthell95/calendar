@@ -1,6 +1,9 @@
 package entity
 
-import "github.com/golang-jwt/jwt"
+import (
+	"github.com/gofrs/uuid"
+	"github.com/golang-jwt/jwt"
+)
 
 type Credentials struct {
 	Login    string
@@ -13,6 +16,6 @@ type AuthToken struct {
 }
 
 type CustomClaims struct {
-	Login string
+	UserId uuid.UUID
 	jwt.StandardClaims
 }

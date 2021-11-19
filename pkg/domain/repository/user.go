@@ -1,11 +1,9 @@
 package repository
 
 import (
-	"github.com/gofrs/uuid"
-
-	"calendar.com/pkg/storage"
-
 	"calendar.com/pkg/domain/entity"
+	"calendar.com/pkg/storage"
+	"github.com/gofrs/uuid"
 )
 
 var _ UserRepository = (*User)(nil)
@@ -31,6 +29,7 @@ func (r *User) FindOneBy(conditions map[string]interface{}) (*entity.User, error
 	if err := r.repo.FindOneBy(&u, conditions); err != nil {
 		return nil, err
 	}
+
 	return &u, nil
 }
 

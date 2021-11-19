@@ -148,17 +148,16 @@ linters-settings:
       - '*.Test'
       - 'example.com/package.ExampleStruct'
 
+
   forbidigo:
     # Forbid the following identifiers (identifiers are written using regexp):
-    forbid:
-      - ^print.*$
-#      - 'fmt\.Print.*'
-      - ^(fmt\.Print(|f|ln)|print|println)$
     # Exclude godoc examples from forbidigo checks.  Default is true.
+    forbidigo:
+      - 'fmt\.Print.*'
     exclude_godoc_examples: false
 
   funlen:
-    lines: 60
+    lines: 100
     statements: 40
 
   gci:
@@ -169,7 +168,7 @@ linters-settings:
 
   gocognit:
     # minimal code complexity to report, 30 by default (but we recommend 10-20)
-    min-complexity: 10
+    min-complexity: 20
 
   goconst:
     # minimal length of string constant, 3 by default
@@ -282,15 +281,6 @@ linters-settings:
     extra-rules: false
 
   goheader:
-    values:
-      const:
-      # define here const type values in format k:v, for example:
-      # COMPANY: MY COMPANY
-      regexp:
-      # define here regexp type values, for example
-      # AUTHOR: .*@mycompany\.com
-    template: nil
-    template-path: nil
 
   goimports:
     # put imports beginning with prefix after 3rd-party packages;
@@ -653,22 +643,23 @@ linters-settings:
 
 linters:
   enable:
-    - deadcode
-    - goimports
-    - golint
-    - govet
-    - gosimple
-    - lll
-    - misspell
-    - staticcheck
-    - structcheck
-    - ineffassign
-    - unconvert
-    - unparam
-    - unused
-    - varcheck
-  enable-all: false
+#    - deadcode
+#    - goimports
+#    - golint
+#    - govet
+#    - gosimple
+#    - lll
+#    - misspell
+#    - staticcheck
+#    - structcheck
+#    - ineffassign
+#    - unconvert
+#    - unparam
+#    - unused
+#    - varcheck
+  enable-all: true
   disable:
+    - forbidigo
     - gocritic
     - prealloc
     - typecheck
@@ -682,10 +673,12 @@ linters:
     - errcheck
     - goconst
     - maligned
+    - paralleltest
+    - testpackage
   disable-all: false
-  presets:
-    - bugs
-    - unused
+#  presets:
+#    - bugs
+#    - unused
   fast: false
 
 
