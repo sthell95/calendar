@@ -10,6 +10,7 @@ import (
 
 type Event interface {
 	Create(event *entity.Event) error
+	Update(event *entity.Event) error
 }
 
 type EventService struct {
@@ -28,6 +29,14 @@ func (es *EventService) Create(e *entity.Event) error {
 	}
 
 	return es.Repository.Create(e)
+}
+
+func (es *EventService) Update(e *entity.Event) error {
+	if ok := validateTime(e.Time); !ok {
+		return IncorrectTime{}
+	}
+
+	return es.Repository.Update(e)
 }
 
 func validateTime(t *time.Time) bool {

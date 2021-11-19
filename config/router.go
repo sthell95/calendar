@@ -6,9 +6,10 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/gorilla/mux"
+
 	"calendar.com/middleware"
 	"calendar.com/pkg/controller"
-	"github.com/gorilla/mux"
 )
 
 type Handlers struct {
@@ -34,6 +35,7 @@ func (h *Handlers) NewRouter() *mux.Router {
 
 	s := r.PathPrefix("/api").Subrouter()
 	s.HandleFunc("/events", h.Create).Methods(http.MethodPost)
+	s.HandleFunc("/events/{id}", h.Update).Methods(http.MethodPut)
 	s.Use(middleware.Authorization)
 
 	_ = r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {

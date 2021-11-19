@@ -47,3 +47,17 @@ func (mr *MockEventMockRecorder) Create(event interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockEvent)(nil).Create), event)
 }
+
+// Update mocks base method.
+func (m *MockEvent) Update(event *entity.Event) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Update", event)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Update indicates an expected call of Update.
+func (mr *MockEventMockRecorder) Update(event interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockEvent)(nil).Update), event)
+}

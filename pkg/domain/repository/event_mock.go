@@ -35,17 +35,17 @@ func (m *MockEventRepository) EXPECT() *MockEventRepositoryMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockEventRepository) Create(event *entity.Event) error {
+func (m *MockEventRepository) Create(arg0 *entity.Event) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", event)
+	ret := m.ctrl.Call(m, "Create", arg0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockEventRepositoryMockRecorder) Create(event interface{}) *gomock.Call {
+func (mr *MockEventRepositoryMockRecorder) Create(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockEventRepository)(nil).Create), event)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockEventRepository)(nil).Create), arg0)
 }
 
 // FindOneById mocks base method.
@@ -64,16 +64,15 @@ func (mr *MockEventRepositoryMockRecorder) FindOneById(arg0 interface{}) *gomock
 }
 
 // Update mocks base method.
-func (m *MockEventRepository) Update(event *entity.Event, id string) (*entity.Event, error) {
+func (m *MockEventRepository) Update(arg0 *entity.Event) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Update", event, id)
-	ret0, _ := ret[0].(*entity.Event)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "Update", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // Update indicates an expected call of Update.
-func (mr *MockEventRepositoryMockRecorder) Update(event, id interface{}) *gomock.Call {
+func (mr *MockEventRepositoryMockRecorder) Update(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockEventRepository)(nil).Update), event, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockEventRepository)(nil).Update), arg0)
 }

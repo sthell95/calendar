@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gorilla/mux"
+
 	"github.com/gofrs/uuid"
 
 	"calendar.com/middleware"
@@ -14,6 +16,10 @@ import (
 	"calendar.com/pkg/logger"
 	"calendar.com/pkg/response"
 )
+
+type contextKey string
+
+const eventIdKey contextKey = "eventId"
 
 type RequestEvent struct {
 	ID          string   `json:"id"`
@@ -41,6 +47,15 @@ func (*ErrorUserContext) Error() string {
 	return "User does not exists in the context"
 }
 
+type ErrorUnhandledPathParameter struct {
+	Name  string
+	Value string
+}
+
+func (e ErrorUnhandledPathParameter) Error() string {
+	return fmt.Sprintf("Not found parameter: %v, value: %v in request path", e.Name, e.Value)
+}
+
 func (re *RequestEvent) RequestToEntity(ctx context.Context) (*entity.Event, error) {
 	t, err := time.Parse(entity.ISOLayout, re.Time)
 	if err != nil {
@@ -51,9 +66,15 @@ func (re *RequestEvent) RequestToEntity(ctx context.Context) (*entity.Event, err
 	if err != nil {
 		return nil, err
 	}
+	var e entity.Event
+
+	if eventId, ok := ctx.Value(eventIdKey).(contextKey); ok {
+		id := uuid.FromStringOrNil(string(eventId))
+		e.ID = id
+	}
 
 	if userId, ok := ctx.Value(middleware.UserId).(uuid.UUID); ok {
-		e := entity.Event{
+		e = entity.Event{
 			Title:       re.Title,
 			Description: re.Description,
 			Timezone:    re.Timezone,
@@ -106,6 +127,43 @@ func (c *Controller) Create(w http.ResponseWriter, r *http.Request) {
 	err = c.EventService.Create(entityEvent)
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "create-event")
+		response.NewPrint().PrettyPrint(w, Error{Message: err.Error()}, response.WithCode(http.StatusBadRequest))
+		return
+	}
+
+	re := &ResponseEvent{}
+	re.EntityToResponse(*entityEvent)
+	response.NewPrint().PrettyPrint(w, re)
+}
+
+func (c *Controller) Update(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	id, ok := params["id"]
+	if !ok {
+		logger.NewLogger().Write(logger.Error, ErrorUnhandledPathParameter{}.Error(), "update-event")
+		response.NewPrint().PrettyPrint(w, Error{Message: ErrorUnhandledPathParameter{}.Error()}, response.WithCode(http.StatusBadRequest))
+		return
+	}
+
+	var event RequestEvent
+	err := json.NewDecoder(r.Body).Decode(&event)
+	if err != nil {
+		logger.NewLogger().Write(logger.Error, err.Error(), "update-event")
+		response.NewPrint().PrettyPrint(w, Error{Message: err.Error()}, response.WithCode(http.StatusBadRequest))
+		return
+	}
+
+	ctx := context.WithValue(r.Context(), eventIdKey, id)
+	entityEvent, err := event.RequestToEntity(ctx)
+	if err != nil {
+		logger.NewLogger().Write(logger.Error, err.Error(), "update-event")
+		response.NewPrint().PrettyPrint(w, Error{Message: err.Error()}, response.WithCode(http.StatusBadRequest))
+		return
+	}
+
+	err = c.EventService.Update(entityEvent)
+	if err != nil {
+		logger.NewLogger().Write(logger.Error, err.Error(), "update-event")
 		response.NewPrint().PrettyPrint(w, Error{Message: err.Error()}, response.WithCode(http.StatusBadRequest))
 		return
 	}

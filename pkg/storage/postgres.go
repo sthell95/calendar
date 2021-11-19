@@ -5,15 +5,17 @@ import (
 	"fmt"
 	"log"
 
-	"calendar.com/pkg/logger"
 	"github.com/gofrs/uuid"
 	"github.com/spf13/viper"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
+	"calendar.com/pkg/logger"
 )
 
 type Repository interface {
 	Create(interface{}, Model) error
+	Update(interface{}, Model) error
 	FindById(interface{}, uuid.UUID) error
 	FindOneBy(entity interface{}, conditions map[string]interface{}) error
 }
@@ -24,6 +26,10 @@ type Model interface {
 
 func (r Storage) Create(entity interface{}, model Model) error {
 	return r.Gorm.Table(model.GetTable()).Create(entity).Error
+}
+
+func (r Storage) Update(entity interface{}, model Model) error {
+	return r.Gorm.Table(model.GetTable()).Save(entity).Error
 }
 
 func (r Storage) FindById(entity interface{}, id uuid.UUID) error {

@@ -21,8 +21,8 @@ type eventPut struct {
 }
 
 type EventRepository interface {
-	Create(event *entity.Event) error
-	Update(event *entity.Event, id string) (*entity.Event, error)
+	Create(*entity.Event) error
+	Update(*entity.Event) error
 	FindOneById(string) (*entity.Event, error)
 }
 
@@ -53,8 +53,23 @@ func (ev *Event) Create(e *entity.Event) error {
 	return nil
 }
 
-func (e *Event) Update(event *entity.Event, id string) (*entity.Event, error) {
-	return nil, nil
+func (ev *Event) Update(e *entity.Event) error {
+	m := &eventPut{
+		Title:       e.Title,
+		Description: e.Description,
+		Timezone:    e.Timezone,
+		Time:        e.Time,
+		Duration:    e.Duration,
+		Notes:       e.Notes,
+		User:        e.User.ID,
+	}
+
+	err := ev.repo.Update(m, EventModel{})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (e *Event) FindOneById(id string) (*entity.Event, error) {
