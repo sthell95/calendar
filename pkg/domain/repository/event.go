@@ -10,6 +10,17 @@ import (
 )
 
 type eventPut struct {
+	ID          uuid.UUID     `gorm:"type:uuid;default:uuid_generate_v4()"`
+	Title       string        `gorm:"type:varchar(100);not null"`
+	Description string        `gorm:"type:text"`
+	Timezone    string        `gorm:"type:varchar;default 'Europe/Riga'"`
+	Time        *time.Time    `gorm:"type:timestamp; not null"`
+	Duration    time.Duration `gorm:"type:time not null"`
+	User        uuid.UUID     `gorm:"type:uuid;not null"`
+	Notes       []entity.Note `gorm:"foreignKey:EventID"`
+}
+
+type eventGet struct {
 	ID          string        `gorm:"type:uuid;default:uuid_generate_v4()"`
 	Title       string        `gorm:"type:varchar(100);not null"`
 	Description string        `gorm:"type:text"`
@@ -23,7 +34,7 @@ type eventPut struct {
 type EventRepository interface {
 	Create(*entity.Event) error
 	Update(*entity.Event) error
-	FindOneById(string) (*entity.Event, error)
+	FindOneById(uuid.UUID) (*entity.Event, error)
 }
 
 type EventModel struct{}
@@ -49,12 +60,13 @@ func (ev *Event) Create(e *entity.Event) error {
 		return err
 	}
 
-	e.ID = uuid.FromStringOrNil(m.ID)
+	e.ID = m.ID
 	return nil
 }
 
 func (ev *Event) Update(e *entity.Event) error {
 	m := &eventPut{
+		ID:          e.ID,
 		Title:       e.Title,
 		Description: e.Description,
 		Timezone:    e.Timezone,
@@ -72,8 +84,24 @@ func (ev *Event) Update(e *entity.Event) error {
 	return nil
 }
 
-func (e *Event) FindOneById(id string) (*entity.Event, error) {
-	return nil, nil
+func (e *Event) FindOneById(id uuid.UUID) (*entity.Event, error) {
+	var model *eventGet
+	err := e.repo.FindById(model, id)
+	if err != nil {
+		return nil, err
+	}
+
+	event := entity.Event{
+		Title:       model.Title,
+		Description: "",
+		Timezone:    "",
+		Time:        nil,
+		Duration:    0,
+		User:        entity.User{},
+		Notes:       nil,
+	}
+
+	return &event, nil
 }
 
 func NewEventRepository(repo storage.Repository) *Event {

@@ -24,7 +24,7 @@ func Authorization(next http.Handler) http.Handler {
 
 			return
 		}
-		ctx := context.WithValue(context.Background(), UserId, userId)
+		ctx := context.WithValue(r.Context(), UserId, userId)
 		r = r.WithContext(ctx)
 
 		next.ServeHTTP(w, r)

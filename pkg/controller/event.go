@@ -19,7 +19,7 @@ import (
 
 type contextKey string
 
-const eventIdKey contextKey = "eventId"
+const EventIdKey contextKey = "eventId"
 
 type RequestEvent struct {
 	ID          string   `json:"id"`
@@ -68,25 +68,21 @@ func (re *RequestEvent) RequestToEntity(ctx context.Context) (*entity.Event, err
 	}
 	var e entity.Event
 
-	if eventId, ok := ctx.Value(eventIdKey).(contextKey); ok {
-		id := uuid.FromStringOrNil(string(eventId))
-		e.ID = id
+	if eventId, ok := ctx.Value(EventIdKey).(uuid.UUID); ok {
+		e.ID = eventId
 	}
 
 	if userId, ok := ctx.Value(middleware.UserId).(uuid.UUID); ok {
-		e = entity.Event{
-			Title:       re.Title,
-			Description: re.Description,
-			Timezone:    re.Timezone,
-			Time:        &t,
-			Duration:    d,
-			User: entity.User{
-				ID: userId,
-			},
-		}
+		e.Title = re.Title
+		e.Description = re.Description
+		e.Timezone = re.Timezone
+		e.Time = &t
+		e.Duration = d
+		e.User = entity.User{ID: userId}
+
 		e.Notes = make([]entity.Note, len(re.Notes), len(re.Notes))
 		for i, v := range re.Notes {
-			e.Notes[i] = entity.Note{Note: v}
+			e.Notes[i] = entity.Note{Note: v, EventID: e.ID}
 		}
 
 		return &e, nil
@@ -138,8 +134,7 @@ func (c *Controller) Create(w http.ResponseWriter, r *http.Request) {
 
 func (c *Controller) Update(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	id, ok := params["id"]
-	if !ok {
+	if len(params) <= 0 {
 		logger.NewLogger().Write(logger.Error, ErrorUnhandledPathParameter{}.Error(), "update-event")
 		response.NewPrint().PrettyPrint(w, Error{Message: ErrorUnhandledPathParameter{}.Error()}, response.WithCode(http.StatusBadRequest))
 		return
@@ -153,7 +148,8 @@ func (c *Controller) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.WithValue(r.Context(), eventIdKey, id)
+	id := uuid.FromStringOrNil(params["id"])
+	ctx := context.WithValue(r.Context(), EventIdKey, id)
 	entityEvent, err := event.RequestToEntity(ctx)
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "update-event")
