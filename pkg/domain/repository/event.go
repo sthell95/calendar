@@ -34,7 +34,8 @@ type eventGet struct {
 type EventRepository interface {
 	Create(*entity.Event) error
 	Update(*entity.Event) error
-	FindOneById(uuid.UUID) (*entity.Event, error)
+	Delete(*entity.Event) error
+	FindOneById(*uuid.UUID) (*entity.Event, error)
 }
 
 type EventModel struct{}
@@ -84,9 +85,9 @@ func (ev *Event) Update(e *entity.Event) error {
 	return nil
 }
 
-func (e *Event) FindOneById(id uuid.UUID) (*entity.Event, error) {
+func (e *Event) FindOneById(id *uuid.UUID) (*entity.Event, error) {
 	var model *eventGet
-	err := e.repo.FindById(model, id)
+	err := e.repo.FindById(model, *id)
 	if err != nil {
 		return nil, err
 	}
@@ -102,6 +103,10 @@ func (e *Event) FindOneById(id uuid.UUID) (*entity.Event, error) {
 	}
 
 	return &event, nil
+}
+
+func (e *Event) Delete(event *entity.Event) error {
+	return e.repo.Delete(event, EventModel{})
 }
 
 func NewEventRepository(repo storage.Repository) *Event {

@@ -7,19 +7,14 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gorilla/mux"
-
 	"github.com/gofrs/uuid"
+	"github.com/gorilla/mux"
 
 	"calendar.com/middleware"
 	"calendar.com/pkg/domain/entity"
 	"calendar.com/pkg/logger"
 	"calendar.com/pkg/response"
 )
-
-type contextKey string
-
-const EventIdKey contextKey = "eventId"
 
 type RequestEvent struct {
 	ID          string   `json:"id"`
@@ -66,9 +61,9 @@ func (re *RequestEvent) RequestToEntity(ctx context.Context) (*entity.Event, err
 	if err != nil {
 		return nil, err
 	}
-	var e entity.Event
 
-	if eventId, ok := ctx.Value(EventIdKey).(uuid.UUID); ok {
+	var e entity.Event
+	if eventId, ok := ctx.Value(entity.EventIdKey).(uuid.UUID); ok {
 		e.ID = eventId
 	}
 
@@ -149,7 +144,7 @@ func (c *Controller) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id := uuid.FromStringOrNil(params["id"])
-	ctx := context.WithValue(r.Context(), EventIdKey, id)
+	ctx := context.WithValue(r.Context(), entity.EventIdKey, id)
 	entityEvent, err := event.RequestToEntity(ctx)
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "update-event")
@@ -157,7 +152,7 @@ func (c *Controller) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = c.EventService.Update(entityEvent)
+	err = c.EventService.Update(ctx, entityEvent)
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "update-event")
 		response.NewPrint().PrettyPrint(w, Error{Message: err.Error()}, response.WithCode(http.StatusBadRequest))
@@ -167,4 +162,21 @@ func (c *Controller) Update(w http.ResponseWriter, r *http.Request) {
 	re := &ResponseEvent{}
 	re.EntityToResponse(*entityEvent)
 	response.NewPrint().PrettyPrint(w, re)
+}
+
+func (c *Controller) Delete(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	if len(params) <= 0 {
+		logger.NewLogger().Write(logger.Error, ErrorUnhandledPathParameter{}.Error(), "delete-event")
+		response.NewPrint().PrettyPrint(w, Error{Message: ErrorUnhandledPathParameter{}.Error()}, response.WithCode(http.StatusBadRequest))
+		return
+	}
+
+	id := uuid.FromStringOrNil(params["id"])
+	err := c.EventService.Delete(r.Context(), &id)
+	if err != nil {
+		logger.NewLogger().Write(logger.Error, err.Error(), "delete-event")
+		response.NewPrint().PrettyPrint(w, Error{Message: err.Error()}, response.WithCode(http.StatusBadRequest))
+		return
+	}
 }
