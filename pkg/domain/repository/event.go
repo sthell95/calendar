@@ -1,7 +1,10 @@
 package repository
 
 import (
+	"fmt"
 	"time"
+
+	"gorm.io/gorm"
 
 	"github.com/gofrs/uuid"
 
@@ -77,12 +80,17 @@ func (ev *Event) Update(e *entity.Event) error {
 		User:        e.User.ID,
 	}
 
-	err := ev.repo.Update(m, EventModel{})
+	condition := fmt.Sprintf(`"user" = '%v'`, e.User.ID)
+	err := ev.repo.Update(m, EventModel{}, condition)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (ev *eventPut) BeforeUpdate(tx *gorm.DB) error {
+	return tx.Where(fmt.Sprintf("event_id = '%v'", ev.ID)).Delete(&entity.Note{}).Error
 }
 
 func (e *Event) FindOneById(id *uuid.UUID) (*entity.Event, error) {

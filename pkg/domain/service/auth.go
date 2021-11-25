@@ -6,13 +6,14 @@ import (
 	"os"
 	"time"
 
-	"calendar.com/pkg/domain/entity"
-	"calendar.com/pkg/domain/repository"
-	"calendar.com/pkg/logger"
 	"github.com/gofrs/uuid"
 	"github.com/golang-jwt/jwt"
 	"github.com/spf13/viper"
 	"golang.org/x/crypto/bcrypt"
+
+	"calendar.com/pkg/domain/entity"
+	"calendar.com/pkg/domain/repository"
+	"calendar.com/pkg/logger"
 )
 
 type InvalidCredentials struct{}
@@ -27,9 +28,9 @@ func (PasswordNotMatched) Error() string {
 	return "Password doesn't match"
 }
 
-type Notfound struct{}
+type UserNotfound struct{}
 
-func (Notfound) Error() string {
+func (UserNotfound) Error() string {
 	return "User not found"
 }
 
@@ -104,7 +105,7 @@ func (s AuthService) CheckCredentials(c entity.Credentials) (*entity.User, error
 		"login": c.Login,
 	})
 	if err != nil || u == nil {
-		return nil, Notfound{}
+		return nil, UserNotfound{}
 	}
 
 	err = matchPasswords(c.Password, u.Password)

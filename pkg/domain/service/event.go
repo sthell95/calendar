@@ -1,7 +1,6 @@
 package service
 
 import (
-	"context"
 	"fmt"
 	"time"
 
@@ -13,8 +12,8 @@ import (
 
 type Event interface {
 	Create(*entity.Event) error
-	Update(context.Context, *entity.Event) error
-	Delete(context.Context, *uuid.UUID) error
+	Update(*entity.Event) error
+	Delete(*uuid.UUID) error
 }
 
 type Validators interface {
@@ -40,6 +39,12 @@ func (Forbidden) Error() string {
 	return fmt.Sprintf("You don't have permissions for this event")
 }
 
+type EventNotFound struct{}
+
+func (EventNotFound) Error() string {
+	return fmt.Sprintf("Event not found")
+}
+
 func (es *EventService) Create(e *entity.Event) error {
 	validator := ValidateEntity{}
 	if ok := validator.ValidateTime(e.Time); !ok {
@@ -49,7 +54,7 @@ func (es *EventService) Create(e *entity.Event) error {
 	return es.Repository.Create(e)
 }
 
-func (es *EventService) Update(ctx context.Context, e *entity.Event) error {
+func (es *EventService) Update(e *entity.Event) error {
 	validator := ValidateEntity{}
 	if ok := validator.ValidateTime(e.Time); !ok {
 		return IncorrectTime{}
@@ -58,7 +63,7 @@ func (es *EventService) Update(ctx context.Context, e *entity.Event) error {
 	return es.Repository.Update(e)
 }
 
-func (es *EventService) Delete(ctx context.Context, eventId *uuid.UUID) error {
+func (es *EventService) Delete(eventId *uuid.UUID) error {
 	event, err := es.Repository.FindOneById(eventId)
 	if err != nil {
 		return err

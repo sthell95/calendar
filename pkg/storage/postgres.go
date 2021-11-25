@@ -15,7 +15,7 @@ import (
 
 type Repository interface {
 	Create(interface{}, Model) error
-	Update(interface{}, Model) error
+	Update(entity interface{}, model Model, condition string) error
 	FindById(interface{}, uuid.UUID) error
 	FindOneBy(entity interface{}, conditions map[string]interface{}) error
 	Delete(interface{}, Model) error
@@ -32,8 +32,8 @@ func (r Storage) Create(entity interface{}, model Model) error {
 	return r.Gorm.Table(model.GetTable()).Create(entity).Error
 }
 
-func (r Storage) Update(entity interface{}, model Model) error {
-	return r.Gorm.Table(model.GetTable()).Save(entity).Error
+func (r Storage) Update(entity interface{}, model Model, condition string) error {
+	return r.Gorm.Table(model.GetTable()).Where(condition).Updates(entity).Error
 }
 
 func (r Storage) FindById(entity interface{}, id uuid.UUID) error {
@@ -47,8 +47,6 @@ func (r Storage) FindOneBy(entity interface{}, conditions map[string]interface{}
 func (r Storage) Delete(entity interface{}, model Model) error {
 	return r.Gorm.Table(model.GetTable()).Delete(entity).Error
 }
-
-//TODO: add action beforeSave to validate access to model
 
 func NewDB(ctx context.Context) *gorm.DB {
 	db, err := gorm.Open(postgres.Open(viper.GetString("postgresql_url")), &gorm.Config{})
