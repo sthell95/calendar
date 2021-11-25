@@ -128,8 +128,8 @@ func (c *Controller) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Controller) Update(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	if len(params) <= 0 {
+	eventId, ok := mux.Vars(r)["id"]
+	if !ok {
 		logger.NewLogger().Write(logger.Error, ErrorUnhandledPathParameter{}.Error(), "update-event")
 		response.NewPrint().PrettyPrint(w, Error{Message: ErrorUnhandledPathParameter{}.Error()}, response.WithCode(http.StatusBadRequest))
 		return
@@ -143,7 +143,7 @@ func (c *Controller) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id := uuid.FromStringOrNil(params["id"])
+	id := uuid.FromStringOrNil(eventId)
 	ctx := context.WithValue(r.Context(), entity.EventIdKey, id)
 	entityEvent, err := event.RequestToEntity(ctx)
 	if err != nil {
@@ -152,7 +152,7 @@ func (c *Controller) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = c.EventService.Update(ctx, entityEvent)
+	err = c.EventService.Update(entityEvent)
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "update-event")
 		response.NewPrint().PrettyPrint(w, Error{Message: err.Error()}, response.WithCode(http.StatusBadRequest))
@@ -173,7 +173,7 @@ func (c *Controller) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id := uuid.FromStringOrNil(params["id"])
-	err := c.EventService.Delete(r.Context(), &id)
+	err := c.EventService.Delete(&id)
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "delete-event")
 		response.NewPrint().PrettyPrint(w, Error{Message: err.Error()}, response.WithCode(http.StatusBadRequest))

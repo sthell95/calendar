@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
+	"github.com/gorilla/mux"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
@@ -312,6 +313,97 @@ func TestResponseEvent_EntityToResponse(t *testing.T) {
 			re.EntityToResponse(*tt.eventEntity())
 
 			require.Equal(t, tt.want, re)
+		})
+	}
+}
+
+func TestController_Update(t *testing.T) {
+	tests := []struct {
+		name         string
+		mock         func(*testing.T, *RequestEvent, context.Context) service.Event
+		requestEvent func() *RequestEvent
+		event        *entity.Event
+		ctx          func() context.Context
+		want         string
+		eventId      string
+	}{
+		{
+			name: "Valid",
+			mock: func(t *testing.T, e *RequestEvent, ctx context.Context) service.Event {
+				ctrl := gomock.NewController(t)
+				mock := service.NewMockEvent(ctrl)
+				event, _ := e.RequestToEntity(ctx)
+				mock.EXPECT().Update(event).Return(nil)
+
+				return mock
+			},
+			ctx: func() context.Context {
+				userId, _ := uuid.FromString("62b45338-ea71-4eaa-b5dd-0b29c752ad1c")
+				ctx := context.WithValue(context.Background(), middleware.UserId, userId)
+
+				return ctx
+			},
+			requestEvent: func() *RequestEvent {
+				return &RequestEvent{
+					Title:       "Birthday",
+					Description: "Need to buy a gift",
+					Timezone:    "America/Chicago",
+					Time:        "2021-12-10T15:04:05.000Z",
+					Duration:    0,
+					Notes:       nil,
+				}
+			},
+			want:    `{"id":"00000000-0000-0000-0000-000000000000","title":"Birthday","description":"Need to buy a gift","timezone":"America/Chicago","time":"2021-12-10T15:04:05.000Z","duration":0,"notes":null}`,
+			eventId: "00000000-0000-0000-0000-000000000000",
+		},
+		{
+			name: "Invalid id",
+			mock: func(t *testing.T, e *RequestEvent, ctx context.Context) service.Event {
+				ctrl := gomock.NewController(t)
+				mock := service.NewMockEvent(ctrl)
+				event, _ := e.RequestToEntity(ctx)
+				mock.EXPECT().Update(event).Return(nil)
+
+				return mock
+			},
+			ctx: func() context.Context {
+				userId, _ := uuid.FromString("62b45338-ea71-4eaa-b5dd-0b29c752ad1c")
+				ctx := context.WithValue(context.Background(), middleware.UserId, userId)
+
+				return ctx
+			},
+			requestEvent: func() *RequestEvent {
+				return &RequestEvent{
+					Title:       "Birthday",
+					Description: "Need to buy a gift",
+					Timezone:    "America/Chicago",
+					Time:        "2021-12-10T15:04:05.000Z",
+					Duration:    0,
+					Notes:       nil,
+				}
+			},
+			want:    `{"message":"Not found parameter"}`,
+			eventId: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			event := tt.requestEvent()
+			ctx := tt.ctx()
+			eventService := tt.mock(t, event, ctx)
+			c := &Controller{EventService: eventService}
+			w := httptest.NewRecorder()
+			body, _ := json.Marshal(event)
+
+			r := httptest.NewRequest(http.MethodPut, "/api/events/:id", bytes.NewReader(body))
+			r = r.WithContext(ctx)
+			r = mux.SetURLVars(r, map[string]string{":id": tt.eventId})
+			c.Update(w, r)
+			responseBody, _ := io.ReadAll(w.Body)
+			eventResponse := strings.Trim(string(responseBody), "\n")
+
+			require.Equal(t, tt.want, eventResponse)
 		})
 	}
 }
