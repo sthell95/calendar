@@ -18,10 +18,7 @@ type Repository interface {
 	Update(entity interface{}, model Model, condition string) error
 	FindById(interface{}, uuid.UUID) error
 	FindOneBy(entity interface{}, conditions map[string]interface{}) error
-	Delete(interface{}, Model) error
-}
-
-type Actions struct {
+	Delete(entity interface{}, model Model, condition string) error
 }
 
 type Model interface {
@@ -44,8 +41,8 @@ func (r Storage) FindOneBy(entity interface{}, conditions map[string]interface{}
 	return r.Gorm.Take(entity, conditions).Error
 }
 
-func (r Storage) Delete(entity interface{}, model Model) error {
-	return r.Gorm.Table(model.GetTable()).Delete(entity).Error
+func (r Storage) Delete(entity interface{}, model Model, conditions string) error {
+	return r.Gorm.Table(model.GetTable()).Where(conditions).Delete(entity).Error
 }
 
 func NewDB(ctx context.Context) *gorm.DB {

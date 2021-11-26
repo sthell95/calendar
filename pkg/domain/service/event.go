@@ -13,7 +13,7 @@ import (
 type Event interface {
 	Create(*entity.Event) error
 	Update(*entity.Event) error
-	Delete(*uuid.UUID) error
+	Delete(*entity.Event) error
 }
 
 type Validators interface {
@@ -63,13 +63,8 @@ func (es *EventService) Update(e *entity.Event) error {
 	return es.Repository.Update(e)
 }
 
-func (es *EventService) Delete(eventId *uuid.UUID) error {
-	event, err := es.Repository.FindOneById(eventId)
-	if err != nil {
-		return err
-	}
-
-	return es.Repository.Delete(event)
+func (es *EventService) Delete(e *entity.Event) error {
+	return es.Repository.Delete(e)
 }
 
 func (*ValidateEntity) IsAuthor(userId *uuid.UUID, eventUserId *uuid.UUID) bool {

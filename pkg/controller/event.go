@@ -171,18 +171,22 @@ func (c *Controller) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Controller) Delete(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	if len(params) <= 0 {
+	eventId, ok := mux.Vars(r)["id"]
+	if !ok || eventId == "" {
 		logger.NewLogger().Write(logger.Error, ErrorUnhandledPathParameter{}.Error(), "delete-event")
 		response.NewPrint().PrettyPrint(w, Error{Message: ErrorUnhandledPathParameter{}.Error()}, response.WithCode(http.StatusBadRequest))
 		return
 	}
 
-	id := uuid.FromStringOrNil(params["id"])
-	err := c.EventService.Delete(&id)
+	id := uuid.FromStringOrNil(eventId)
+	userId := r.Context().Value(middleware.UserId).(uuid.UUID)
+	e := entity.Event{ID: id, User: entity.User{ID: userId}}
+	err := c.EventService.Delete(&e)
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "delete-event")
 		response.NewPrint().PrettyPrint(w, Error{Message: err.Error()}, response.WithCode(http.StatusBadRequest))
 		return
 	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
