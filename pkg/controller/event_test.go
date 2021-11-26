@@ -14,9 +14,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gofrs/uuid"
 	"github.com/gorilla/mux"
 
+	"github.com/gofrs/uuid"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
@@ -361,8 +361,6 @@ func TestController_Update(t *testing.T) {
 			mock: func(t *testing.T, e *RequestEvent, ctx context.Context) service.Event {
 				ctrl := gomock.NewController(t)
 				mock := service.NewMockEvent(ctrl)
-				event, _ := e.RequestToEntity(ctx)
-				mock.EXPECT().Update(event).Return(nil)
 
 				return mock
 			},
@@ -382,7 +380,7 @@ func TestController_Update(t *testing.T) {
 					Notes:       nil,
 				}
 			},
-			want:    `{"message":"Not found parameter"}`,
+			want:    `{"message":"Not found parameter: id, value:  in request path"}`,
 			eventId: "",
 		},
 	}
@@ -395,10 +393,13 @@ func TestController_Update(t *testing.T) {
 			c := &Controller{EventService: eventService}
 			w := httptest.NewRecorder()
 			body, _ := json.Marshal(event)
-
 			r := httptest.NewRequest(http.MethodPut, "/api/events/:id", bytes.NewReader(body))
 			r = r.WithContext(ctx)
-			r = mux.SetURLVars(r, map[string]string{":id": tt.eventId})
+
+			if tt.eventId != "" {
+				r = mux.SetURLVars(r, map[string]string{"id": tt.eventId})
+			}
+
 			c.Update(w, r)
 			responseBody, _ := io.ReadAll(w.Body)
 			eventResponse := strings.Trim(string(responseBody), "\n")

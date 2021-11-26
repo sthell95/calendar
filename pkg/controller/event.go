@@ -129,9 +129,15 @@ func (c *Controller) Create(w http.ResponseWriter, r *http.Request) {
 
 func (c *Controller) Update(w http.ResponseWriter, r *http.Request) {
 	eventId, ok := mux.Vars(r)["id"]
-	if !ok {
-		logger.NewLogger().Write(logger.Error, ErrorUnhandledPathParameter{}.Error(), "update-event")
-		response.NewPrint().PrettyPrint(w, Error{Message: ErrorUnhandledPathParameter{}.Error()}, response.WithCode(http.StatusBadRequest))
+	if !ok || eventId == "" {
+		logger.NewLogger().Write(logger.Error, ErrorUnhandledPathParameter{
+			Name:  "id",
+			Value: eventId,
+		}.Error(), "update-event")
+		response.NewPrint().PrettyPrint(w, Error{Message: ErrorUnhandledPathParameter{
+			Name:  "id",
+			Value: eventId,
+		}.Error()}, response.WithCode(http.StatusBadRequest))
 		return
 	}
 
