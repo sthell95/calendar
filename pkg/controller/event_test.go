@@ -322,7 +322,6 @@ func TestController_Update(t *testing.T) {
 		name         string
 		mock         func(*testing.T, *RequestEvent, context.Context) service.Event
 		requestEvent func() *RequestEvent
-		event        *entity.Event
 		ctx          func() context.Context
 		want         string
 		eventId      string
@@ -405,6 +404,94 @@ func TestController_Update(t *testing.T) {
 			eventResponse := strings.Trim(string(responseBody), "\n")
 
 			require.Equal(t, tt.want, eventResponse)
+		})
+	}
+}
+
+func TestController_Delete(t *testing.T) {
+	tests := []struct {
+		name      string
+		mock      func(*testing.T, *entity.Event, context.Context) service.Event
+		ctx       func() context.Context
+		wantError int
+		eventId   string
+	}{
+		{
+			name: "Valid",
+			mock: func(t *testing.T, e *entity.Event, ctx context.Context) service.Event {
+				ctrl := gomock.NewController(t)
+				mock := service.NewMockEvent(ctrl)
+				mock.EXPECT().Delete(e).Return(nil)
+
+				return mock
+			},
+			ctx: func() context.Context {
+				userId, _ := uuid.FromString("62b45338-ea71-4eaa-b5dd-0b29c752ad1c")
+				ctx := context.WithValue(context.Background(), middleware.UserId, userId)
+
+				return ctx
+			},
+			wantError: http.StatusNoContent,
+			eventId:   "00000000-0000-0000-0000-000000000000",
+		},
+		{
+			name: "Invalid id",
+			mock: func(t *testing.T, e *entity.Event, ctx context.Context) service.Event {
+				ctrl := gomock.NewController(t)
+				mock := service.NewMockEvent(ctrl)
+
+				return mock
+			},
+			ctx: func() context.Context {
+				userId, _ := uuid.FromString("62b45338-ea71-4eaa-b5dd-0b29c752ad1c")
+				ctx := context.WithValue(context.Background(), middleware.UserId, userId)
+
+				return ctx
+			},
+			wantError: http.StatusBadRequest,
+			eventId:   "",
+		},
+		{
+			name: "Invalid deletion process",
+			mock: func(t *testing.T, e *entity.Event, ctx context.Context) service.Event {
+				ctrl := gomock.NewController(t)
+				mock := service.NewMockEvent(ctrl)
+				mock.EXPECT().Delete(e).Return(errors.New("Couldn't delete"))
+
+				return mock
+			},
+			ctx: func() context.Context {
+				userId, _ := uuid.FromString("62b45338-ea71-4eaa-b5dd-0b29c752ad1c")
+				ctx := context.WithValue(context.Background(), middleware.UserId, userId)
+
+				return ctx
+			},
+			wantError: http.StatusBadRequest,
+			eventId:   "00000000-0000-0000-0000-000000000000",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := tt.ctx()
+			eventId, _ := uuid.FromString(tt.eventId)
+			e := entity.Event{
+				ID:   eventId,
+				User: entity.User{ID: ctx.Value(middleware.UserId).(uuid.UUID)},
+			}
+			eventService := tt.mock(t, &e, ctx)
+			c := &Controller{EventService: eventService}
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest(http.MethodPut, "/api/events/:id", nil)
+			r = r.WithContext(ctx)
+
+			if tt.eventId != "" {
+				r = mux.SetURLVars(r, map[string]string{"id": tt.eventId})
+			}
+
+			c.Delete(w, r)
+
+			require.Equal(t, tt.wantError, w.Code)
 		})
 	}
 }

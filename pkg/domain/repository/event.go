@@ -34,6 +34,11 @@ type eventGet struct {
 	Notes       []entity.Note `gorm:"foreignKey:EventID"`
 }
 
+type eventDelete struct {
+	ID   string    `gorm:"type:uuid;default:uuid_generate_v4()"`
+	User uuid.UUID `gorm:"type:uuid;not null"`
+}
+
 type EventRepository interface {
 	Create(*entity.Event) error
 	Update(*entity.Event) error
@@ -114,7 +119,12 @@ func (e *Event) FindOneById(id *uuid.UUID) (*entity.Event, error) {
 }
 
 func (e *Event) Delete(event *entity.Event) error {
-	return e.repo.Delete(event, EventModel{})
+	c := fmt.Sprintf(`"user" = '%v'`, event.User.ID)
+	m := eventDelete{
+		ID:   event.ID.String(),
+		User: event.ID,
+	}
+	return e.repo.Delete(m, EventModel{}, c)
 }
 
 func NewEventRepository(repo storage.Repository) *Event {

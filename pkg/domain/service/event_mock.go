@@ -51,7 +51,7 @@ func (mr *MockEventMockRecorder) Create(arg0 interface{}) *gomock.Call {
 }
 
 // Delete mocks base method.
-func (m *MockEvent) Delete(arg0 *uuid.UUID) error {
+func (m *MockEvent) Delete(arg0 *entity.Event) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Delete", arg0)
 	ret0, _ := ret[0].(error)
