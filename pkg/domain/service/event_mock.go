@@ -6,8 +6,10 @@ package service
 
 import (
 	reflect "reflect"
+	time "time"
 
 	entity "calendar.com/pkg/domain/entity"
+	uuid "github.com/gofrs/uuid"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -35,15 +37,94 @@ func (m *MockEvent) EXPECT() *MockEventMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockEvent) Create(event *entity.Event) error {
+func (m *MockEvent) Create(arg0 *entity.Event) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", event)
+	ret := m.ctrl.Call(m, "Create", arg0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockEventMockRecorder) Create(event interface{}) *gomock.Call {
+func (mr *MockEventMockRecorder) Create(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockEvent)(nil).Create), event)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockEvent)(nil).Create), arg0)
+}
+
+// Delete mocks base method.
+func (m *MockEvent) Delete(arg0 *uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Delete", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Delete indicates an expected call of Delete.
+func (mr *MockEventMockRecorder) Delete(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockEvent)(nil).Delete), arg0)
+}
+
+// Update mocks base method.
+func (m *MockEvent) Update(arg0 *entity.Event) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Update", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Update indicates an expected call of Update.
+func (mr *MockEventMockRecorder) Update(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockEvent)(nil).Update), arg0)
+}
+
+// MockValidators is a mock of Validators interface.
+type MockValidators struct {
+	ctrl     *gomock.Controller
+	recorder *MockValidatorsMockRecorder
+}
+
+// MockValidatorsMockRecorder is the mock recorder for MockValidators.
+type MockValidatorsMockRecorder struct {
+	mock *MockValidators
+}
+
+// NewMockValidators creates a new mock instance.
+func NewMockValidators(ctrl *gomock.Controller) *MockValidators {
+	mock := &MockValidators{ctrl: ctrl}
+	mock.recorder = &MockValidatorsMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockValidators) EXPECT() *MockValidatorsMockRecorder {
+	return m.recorder
+}
+
+// IsAuthor mocks base method.
+func (m *MockValidators) IsAuthor(userId, eventUserId *uuid.UUID) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsAuthor", userId, eventUserId)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsAuthor indicates an expected call of IsAuthor.
+func (mr *MockValidatorsMockRecorder) IsAuthor(userId, eventUserId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsAuthor", reflect.TypeOf((*MockValidators)(nil).IsAuthor), userId, eventUserId)
+}
+
+// ValidateTime mocks base method.
+func (m *MockValidators) ValidateTime(arg0 *time.Time) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ValidateTime", arg0)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// ValidateTime indicates an expected call of ValidateTime.
+func (mr *MockValidatorsMockRecorder) ValidateTime(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateTime", reflect.TypeOf((*MockValidators)(nil).ValidateTime), arg0)
 }

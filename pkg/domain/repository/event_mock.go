@@ -8,6 +8,7 @@ import (
 	reflect "reflect"
 
 	entity "calendar.com/pkg/domain/entity"
+	uuid "github.com/gofrs/uuid"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -35,21 +36,35 @@ func (m *MockEventRepository) EXPECT() *MockEventRepositoryMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockEventRepository) Create(event *entity.Event) error {
+func (m *MockEventRepository) Create(arg0 *entity.Event) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", event)
+	ret := m.ctrl.Call(m, "Create", arg0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockEventRepositoryMockRecorder) Create(event interface{}) *gomock.Call {
+func (mr *MockEventRepositoryMockRecorder) Create(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockEventRepository)(nil).Create), event)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockEventRepository)(nil).Create), arg0)
+}
+
+// Delete mocks base method.
+func (m *MockEventRepository) Delete(arg0 *entity.Event) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Delete", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Delete indicates an expected call of Delete.
+func (mr *MockEventRepositoryMockRecorder) Delete(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockEventRepository)(nil).Delete), arg0)
 }
 
 // FindOneById mocks base method.
-func (m *MockEventRepository) FindOneById(arg0 string) (*entity.Event, error) {
+func (m *MockEventRepository) FindOneById(arg0 *uuid.UUID) (*entity.Event, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "FindOneById", arg0)
 	ret0, _ := ret[0].(*entity.Event)
@@ -64,16 +79,15 @@ func (mr *MockEventRepositoryMockRecorder) FindOneById(arg0 interface{}) *gomock
 }
 
 // Update mocks base method.
-func (m *MockEventRepository) Update(event *entity.Event, id string) (*entity.Event, error) {
+func (m *MockEventRepository) Update(arg0 *entity.Event) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Update", event, id)
-	ret0, _ := ret[0].(*entity.Event)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "Update", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // Update indicates an expected call of Update.
-func (mr *MockEventRepositoryMockRecorder) Update(event, id interface{}) *gomock.Call {
+func (mr *MockEventRepositoryMockRecorder) Update(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockEventRepository)(nil).Update), event, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockEventRepository)(nil).Update), arg0)
 }

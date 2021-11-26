@@ -18,3 +18,7 @@ type Event struct {
 	User        User
 	Notes       []Note
 }
+
+type contextKey string
+
+const EventIdKey contextKey = "eventId"

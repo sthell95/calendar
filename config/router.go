@@ -6,9 +6,10 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/gorilla/mux"
+
 	"calendar.com/middleware"
 	"calendar.com/pkg/controller"
-	"github.com/gorilla/mux"
 )
 
 type Handlers struct {
@@ -33,8 +34,11 @@ func (h *Handlers) NewRouter() *mux.Router {
 	r.HandleFunc("/health_checker", h.HealthHandler).Methods(http.MethodGet)
 
 	s := r.PathPrefix("/api").Subrouter()
-	s.HandleFunc("/events", h.Create).Methods(http.MethodPost)
-	s.Use(middleware.Authorization)
+	e := s.PathPrefix("/events").Subrouter()
+	e.HandleFunc("/{id}", h.Update).Methods(http.MethodPut)
+	e.HandleFunc("/{id}", h.Delete).Methods(http.MethodDelete)
+	e.Use(middleware.Authorization)
+	e.HandleFunc("", h.Create).Methods(http.MethodPost)
 
 	_ = r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
 		t, err := route.GetPathTemplate()
