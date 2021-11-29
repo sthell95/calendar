@@ -9,6 +9,7 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/gorilla/mux"
+	"github.com/opentracing/opentracing-go"
 
 	"calendar.com/middleware"
 	"calendar.com/pkg/domain/entity"
@@ -52,6 +53,9 @@ func (e ErrorUnhandledPathParameter) Error() string {
 }
 
 func (re *RequestEvent) RequestToEntity(ctx context.Context) (*entity.Event, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "request-to-entity")
+	defer span.Finish()
+
 	t, err := time.Parse(entity.ISOLayout, re.Time)
 	if err != nil {
 		return nil, err
@@ -86,7 +90,10 @@ func (re *RequestEvent) RequestToEntity(ctx context.Context) (*entity.Event, err
 	return nil, &ErrorUserContext{}
 }
 
-func (re *ResponseEvent) EntityToResponse(e entity.Event) {
+func (re *ResponseEvent) EntityToResponse(ctx context.Context, e entity.Event) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "entity-to-response")
+	defer span.Finish()
+
 	re.ID = e.ID.String()
 	re.Title = e.Title
 	re.Description = e.Description
@@ -100,6 +107,9 @@ func (re *ResponseEvent) EntityToResponse(e entity.Event) {
 }
 
 func (c *Controller) Create(w http.ResponseWriter, r *http.Request) {
+	span, ctx := opentracing.StartSpanFromContext(r.Context(), "create-event")
+	defer span.Finish()
+
 	var event RequestEvent
 	err := json.NewDecoder(r.Body).Decode(&event)
 	if err != nil {
@@ -115,7 +125,7 @@ func (c *Controller) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = c.EventService.Create(entityEvent)
+	err = c.EventService.Create(ctx, entityEvent)
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "create-event")
 		response.NewPrint().PrettyPrint(w, Error{Message: err.Error()}, response.WithCode(http.StatusBadRequest))
@@ -123,11 +133,14 @@ func (c *Controller) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	re := &ResponseEvent{}
-	re.EntityToResponse(*entityEvent)
+	re.EntityToResponse(ctx, *entityEvent)
 	response.NewPrint().PrettyPrint(w, re)
 }
 
 func (c *Controller) Update(w http.ResponseWriter, r *http.Request) {
+	span, ctx := opentracing.StartSpanFromContext(r.Context(), "update-event")
+	defer span.Finish()
+
 	eventId, ok := mux.Vars(r)["id"]
 	if !ok || eventId == "" {
 		logger.NewLogger().Write(logger.Error, ErrorUnhandledPathParameter{
@@ -150,7 +163,7 @@ func (c *Controller) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id := uuid.FromStringOrNil(eventId)
-	ctx := context.WithValue(r.Context(), entity.EventIdKey, id)
+	ctx = context.WithValue(ctx, entity.EventIdKey, id)
 	entityEvent, err := event.RequestToEntity(ctx)
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "update-event")
@@ -158,7 +171,7 @@ func (c *Controller) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = c.EventService.Update(entityEvent)
+	err = c.EventService.Update(ctx, entityEvent)
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "update-event")
 		response.NewPrint().PrettyPrint(w, Error{Message: err.Error()}, response.WithCode(http.StatusBadRequest))
@@ -166,11 +179,15 @@ func (c *Controller) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	re := &ResponseEvent{}
-	re.EntityToResponse(*entityEvent)
+	re.EntityToResponse(ctx, *entityEvent)
 	response.NewPrint().PrettyPrint(w, re)
 }
 
 func (c *Controller) Delete(w http.ResponseWriter, r *http.Request) {
+	span, ctx := opentracing.StartSpanFromContext(r.Context(), "delete-event")
+	span.SetTag("this", 999999999999)
+	defer span.Finish()
+
 	eventId, ok := mux.Vars(r)["id"]
 	if !ok || eventId == "" {
 		logger.NewLogger().Write(logger.Error, ErrorUnhandledPathParameter{}.Error(), "delete-event")
@@ -181,7 +198,7 @@ func (c *Controller) Delete(w http.ResponseWriter, r *http.Request) {
 	id := uuid.FromStringOrNil(eventId)
 	userId := r.Context().Value(middleware.UserId).(uuid.UUID)
 	e := entity.Event{ID: id, User: entity.User{ID: userId}}
-	err := c.EventService.Delete(&e)
+	err := c.EventService.Delete(ctx, &e)
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "delete-event")
 		response.NewPrint().PrettyPrint(w, Error{Message: err.Error()}, response.WithCode(http.StatusBadRequest))

@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/opentracing/opentracing-go"
+
 	"calendar.com/pkg/domain/entity"
 	"calendar.com/pkg/logger"
 	"calendar.com/pkg/response"
@@ -20,6 +22,9 @@ type ResponseToken struct {
 }
 
 func (c *Controller) SignIn(w http.ResponseWriter, r *http.Request) {
+	span, ctx := opentracing.StartSpanFromContext(r.Context(), "sign-in")
+	defer span.Finish()
+
 	var credential RequestCredentials
 	err := json.NewDecoder(r.Body).Decode(&credential)
 	if err != nil {
@@ -36,7 +41,7 @@ func (c *Controller) SignIn(w http.ResponseWriter, r *http.Request) {
 		Login:    credential.Login,
 		Password: credential.Password,
 	}
-	token, err := c.AuthService.SignInProcess(&data)
+	token, err := c.AuthService.SignInProcess(ctx, &data)
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "sign-in")
 		response.NewPrint().PrettyPrint(

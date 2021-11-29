@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/golang-jwt/jwt"
+	"github.com/opentracing/opentracing-go"
 	"github.com/spf13/viper"
 	"golang.org/x/crypto/bcrypt"
 
@@ -50,10 +52,13 @@ type Credentials interface {
 }
 
 type Authorization interface {
-	SignInProcess(c *entity.Credentials) (*entity.AuthToken, error)
+	SignInProcess(ctx context.Context, c *entity.Credentials) (*entity.AuthToken, error)
 }
 
-func (s *AuthService) SignInProcess(c *entity.Credentials) (*entity.AuthToken, error) {
+func (s *AuthService) SignInProcess(ctx context.Context, c *entity.Credentials) (*entity.AuthToken, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "sign-in-process")
+	defer span.Finish()
+
 	creds := entity.Credentials{
 		Login:    c.Login,
 		Password: c.Password,
