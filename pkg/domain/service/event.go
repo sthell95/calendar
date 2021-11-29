@@ -1,8 +1,11 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"time"
+
+	"github.com/opentracing/opentracing-go"
 
 	"github.com/gofrs/uuid"
 
@@ -11,9 +14,9 @@ import (
 )
 
 type Event interface {
-	Create(*entity.Event) error
-	Update(*entity.Event) error
-	Delete(*entity.Event) error
+	Create(context.Context, *entity.Event) error
+	Update(context.Context, *entity.Event) error
+	Delete(context.Context, *entity.Event) error
 }
 
 type Validators interface {
@@ -45,26 +48,35 @@ func (EventNotFound) Error() string {
 	return fmt.Sprintf("Event not found")
 }
 
-func (es *EventService) Create(e *entity.Event) error {
+func (es *EventService) Create(ctx context.Context, e *entity.Event) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "create-event-process")
+	defer span.Finish()
+
 	validator := ValidateEntity{}
 	if ok := validator.ValidateTime(e.Time); !ok {
 		return IncorrectTime{}
 	}
 
-	return es.Repository.Create(e)
+	return es.Repository.Create(ctx, e)
 }
 
-func (es *EventService) Update(e *entity.Event) error {
+func (es *EventService) Update(ctx context.Context, e *entity.Event) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "update-event-process")
+	defer span.Finish()
+
 	validator := ValidateEntity{}
 	if ok := validator.ValidateTime(e.Time); !ok {
 		return IncorrectTime{}
 	}
 
-	return es.Repository.Update(e)
+	return es.Repository.Update(ctx, e)
 }
 
-func (es *EventService) Delete(e *entity.Event) error {
-	return es.Repository.Delete(e)
+func (es *EventService) Delete(ctx context.Context, e *entity.Event) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "delete-event-process")
+	defer span.Finish()
+
+	return es.Repository.Delete(ctx, e)
 }
 
 func (*ValidateEntity) IsAuthor(userId *uuid.UUID, eventUserId *uuid.UUID) bool {

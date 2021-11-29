@@ -4,6 +4,10 @@ import (
 	"context"
 	"fmt"
 	"os"
+
+	"github.com/opentracing/opentracing-go"
+	"github.com/uber/jaeger-lib/metrics"
+
 	"os/signal"
 
 	"github.com/spf13/viper"
@@ -14,6 +18,10 @@ import (
 	"calendar.com/pkg/domain/service"
 	"calendar.com/pkg/logger"
 	"calendar.com/pkg/storage"
+
+	"github.com/uber/jaeger-client-go"
+	jaegercfg "github.com/uber/jaeger-client-go/config"
+	jaegerlog "github.com/uber/jaeger-client-go/log"
 )
 
 func main() {
@@ -42,7 +50,33 @@ func main() {
 	handlers := new(config.Handlers)
 	handlers.NewHandler(*c)
 
-	err := config.Run(ctx, handlers.NewRouter())
+	cfg := jaegercfg.Configuration{
+		ServiceName: "calendar",
+		Sampler: &jaegercfg.SamplerConfig{
+			Type:  jaeger.SamplerTypeConst,
+			Param: 1,
+		},
+		Reporter: &jaegercfg.ReporterConfig{
+			LogSpans: true,
+		},
+	}
+
+	jLogger := jaegerlog.StdLogger
+	jMetricsFactory := metrics.NullFactory
+
+	tracer, closer, err := cfg.NewTracer(
+		jaegercfg.Logger(jLogger),
+		jaegercfg.Metrics(jMetricsFactory),
+	)
+	if err != nil {
+		logger.NewLogger().Write(logger.Error, err.Error(), "serve")
+	}
+
+	defer closer.Close()
+
+	opentracing.SetGlobalTracer(tracer)
+
+	err = config.Run(ctx, handlers.NewRouter())
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "serve")
 	}

@@ -1,12 +1,13 @@
 package repository
 
 import (
+	"context"
 	"fmt"
 	"time"
 
-	"gorm.io/gorm"
-
 	"github.com/gofrs/uuid"
+	"github.com/opentracing/opentracing-go"
+	"gorm.io/gorm"
 
 	"calendar.com/pkg/domain/entity"
 	"calendar.com/pkg/storage"
@@ -40,9 +41,9 @@ type eventDelete struct {
 }
 
 type EventRepository interface {
-	Create(*entity.Event) error
-	Update(*entity.Event) error
-	Delete(*entity.Event) error
+	Create(context.Context, *entity.Event) error
+	Update(context.Context, *entity.Event) error
+	Delete(context.Context, *entity.Event) error
 	FindOneById(*uuid.UUID) (*entity.Event, error)
 }
 
@@ -52,7 +53,10 @@ type Event struct {
 	repo storage.Repository
 }
 
-func (ev *Event) Create(e *entity.Event) error {
+func (ev *Event) Create(ctx context.Context, e *entity.Event) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "create-event-repository")
+	defer span.Finish()
+
 	t := time.Now()
 	m := &eventPut{
 		Title:       e.Title,
@@ -73,7 +77,10 @@ func (ev *Event) Create(e *entity.Event) error {
 	return nil
 }
 
-func (ev *Event) Update(e *entity.Event) error {
+func (ev *Event) Update(ctx context.Context, e *entity.Event) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "update-event-repository")
+	defer span.Finish()
+
 	m := &eventPut{
 		ID:          e.ID,
 		Title:       e.Title,
@@ -118,7 +125,10 @@ func (e *Event) FindOneById(id *uuid.UUID) (*entity.Event, error) {
 	return &event, nil
 }
 
-func (e *Event) Delete(event *entity.Event) error {
+func (e *Event) Delete(ctx context.Context, event *entity.Event) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "delete-event-repository")
+	defer span.Finish()
+
 	c := fmt.Sprintf(`"user" = '%v'`, event.User.ID)
 	m := eventDelete{
 		ID:   event.ID.String(),
