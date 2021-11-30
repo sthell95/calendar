@@ -1,6 +1,8 @@
 package service
 
 import (
+	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -31,7 +33,9 @@ func TestEventService_Create(t *testing.T) {
 				eventRepository := repository.NewMockEventRepository(ctrl)
 				eventRepository.
 					EXPECT().
-					Create(&e).
+					Create(gomock.Any(), &e).Do(func(a, b interface{}) {
+					fmt.Println(a, b)
+				}).
 					Return(nil)
 
 				return eventRepository
@@ -60,7 +64,7 @@ func TestEventService_Create(t *testing.T) {
 			eventRepository := tt.mock(t, event)
 			es := &EventService{Repository: eventRepository}
 
-			err := es.Create(&event)
+			err := es.Create(context.Background(), &event)
 			require.ErrorIs(t, err, tt.wantErr)
 		})
 	}
@@ -85,7 +89,7 @@ func TestEventService_Update(t *testing.T) {
 				eventRepository := repository.NewMockEventRepository(ctrl)
 				eventRepository.
 					EXPECT().
-					Update(&e).
+					Update(gomock.Any(), &e).
 					Return(nil)
 
 				return eventRepository
@@ -114,7 +118,7 @@ func TestEventService_Update(t *testing.T) {
 			eventRepository := tt.mock(t, event)
 			es := &EventService{Repository: eventRepository}
 
-			err := es.Update(&event)
+			err := es.Update(context.Background(), &event)
 			require.ErrorIs(t, err, tt.wantErr)
 		})
 	}

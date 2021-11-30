@@ -40,7 +40,7 @@ func TestController_Create(t *testing.T) {
 				ctrl := gomock.NewController(t)
 				mock := service.NewMockEvent(ctrl)
 				event, _ := e.RequestToEntity(ctx)
-				mock.EXPECT().Create(event).Return(nil)
+				mock.EXPECT().Create(gomock.Any(), event).Return(nil)
 
 				return mock
 			},
@@ -91,7 +91,7 @@ func TestController_Create(t *testing.T) {
 				ctrl := gomock.NewController(t)
 				mock := service.NewMockEvent(ctrl)
 				event, _ := e.RequestToEntity(ctx)
-				mock.EXPECT().Create(event).Return(errors.New("Could not create event"))
+				mock.EXPECT().Create(gomock.Any(), event).Return(errors.New("Could not create event"))
 
 				return mock
 			},
@@ -310,7 +310,7 @@ func TestResponseEvent_EntityToResponse(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			re := &ResponseEvent{}
-			re.EntityToResponse(*tt.eventEntity())
+			re.EntityToResponse(context.Background(), *tt.eventEntity())
 
 			require.Equal(t, tt.want, re)
 		})
@@ -332,7 +332,7 @@ func TestController_Update(t *testing.T) {
 				ctrl := gomock.NewController(t)
 				mock := service.NewMockEvent(ctrl)
 				event, _ := e.RequestToEntity(ctx)
-				mock.EXPECT().Update(event).Return(nil)
+				mock.EXPECT().Update(gomock.Any(), event).Return(nil)
 
 				return mock
 			},
@@ -411,17 +411,17 @@ func TestController_Update(t *testing.T) {
 func TestController_Delete(t *testing.T) {
 	tests := []struct {
 		name      string
-		mock      func(*testing.T, *entity.Event, context.Context) service.Event
+		mock      func(*testing.T, *entity.Event) service.Event
 		ctx       func() context.Context
 		wantError int
 		eventId   string
 	}{
 		{
 			name: "Valid",
-			mock: func(t *testing.T, e *entity.Event, ctx context.Context) service.Event {
+			mock: func(t *testing.T, e *entity.Event) service.Event {
 				ctrl := gomock.NewController(t)
 				mock := service.NewMockEvent(ctrl)
-				mock.EXPECT().Delete(e).Return(nil)
+				mock.EXPECT().Delete(gomock.Any(), e).Return(nil)
 
 				return mock
 			},
@@ -436,7 +436,7 @@ func TestController_Delete(t *testing.T) {
 		},
 		{
 			name: "Invalid id",
-			mock: func(t *testing.T, e *entity.Event, ctx context.Context) service.Event {
+			mock: func(t *testing.T, e *entity.Event) service.Event {
 				ctrl := gomock.NewController(t)
 				mock := service.NewMockEvent(ctrl)
 
@@ -453,10 +453,10 @@ func TestController_Delete(t *testing.T) {
 		},
 		{
 			name: "Invalid deletion process",
-			mock: func(t *testing.T, e *entity.Event, ctx context.Context) service.Event {
+			mock: func(t *testing.T, e *entity.Event) service.Event {
 				ctrl := gomock.NewController(t)
 				mock := service.NewMockEvent(ctrl)
-				mock.EXPECT().Delete(e).Return(errors.New("Couldn't delete"))
+				mock.EXPECT().Delete(gomock.Any(), e).Return(errors.New("Couldn't delete"))
 
 				return mock
 			},
@@ -479,7 +479,7 @@ func TestController_Delete(t *testing.T) {
 				ID:   eventId,
 				User: entity.User{ID: ctx.Value(middleware.UserId).(uuid.UUID)},
 			}
-			eventService := tt.mock(t, &e, ctx)
+			eventService := tt.mock(t, &e)
 			c := &Controller{EventService: eventService}
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest(http.MethodPut, "/api/events/:id", nil)

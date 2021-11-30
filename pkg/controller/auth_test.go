@@ -10,10 +10,11 @@ import (
 	"strings"
 	"testing"
 
-	"calendar.com/pkg/domain/entity"
-	"calendar.com/pkg/domain/service"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
+
+	"calendar.com/pkg/domain/entity"
+	"calendar.com/pkg/domain/service"
 )
 
 func TestController_SignIn(t *testing.T) {
@@ -31,7 +32,7 @@ func TestController_SignIn(t *testing.T) {
 		{
 			name: "Valid",
 			mock: func(mock *service.MockAuthorization, creds entity.Credentials) {
-				mock.EXPECT().SignInProcess(&creds).Return(&entity.AuthToken{
+				mock.EXPECT().SignInProcess(gomock.Any(), &creds).Return(&entity.AuthToken{
 					Token:     "token",
 					ExpiresAt: 1,
 				}, nil).AnyTimes()
@@ -43,7 +44,7 @@ func TestController_SignIn(t *testing.T) {
 			name: "Invalid credentials",
 			mock: func(mock *service.MockAuthorization, creds entity.Credentials) {
 				e := errors.New("Invalid credentials")
-				mock.EXPECT().SignInProcess(&creds).Return(nil, e).AnyTimes()
+				mock.EXPECT().SignInProcess(gomock.Any(), &creds).Return(nil, e).AnyTimes()
 			},
 			wantMessage: `{"message":"Invalid credentials"}`,
 			wantCode:    http.StatusBadRequest,
