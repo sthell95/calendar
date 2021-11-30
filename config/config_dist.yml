@@ -1,6 +1,7 @@
 port: 8000
 
 postgresql_url:
+db_client:
 
 security:
   private_key:

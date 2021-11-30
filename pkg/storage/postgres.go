@@ -25,27 +25,31 @@ type Model interface {
 	GetTable() string
 }
 
-func (r Storage) Create(entity interface{}, model Model) error {
-	return r.Gorm.Table(model.GetTable()).Create(entity).Error
+type GormClient struct {
+	*gorm.DB
 }
 
-func (r Storage) Update(entity interface{}, model Model, condition string) error {
-	return r.Gorm.Table(model.GetTable()).Where(condition).Updates(entity).Error
+func (r *GormClient) Create(entity interface{}, model Model) error {
+	return r.Table(model.GetTable()).Create(entity).Error
 }
 
-func (r Storage) FindById(entity interface{}, id uuid.UUID) error {
-	return r.Gorm.First(entity, id).Error
+func (r *GormClient) Update(entity interface{}, model Model, condition string) error {
+	return r.Table(model.GetTable()).Where(condition).Updates(entity).Error
 }
 
-func (r Storage) FindOneBy(entity interface{}, conditions map[string]interface{}) error {
-	return r.Gorm.Take(entity, conditions).Error
+func (r *GormClient) FindById(entity interface{}, id uuid.UUID) error {
+	return r.First(entity, id).Error
 }
 
-func (r Storage) Delete(entity interface{}, model Model, conditions string) error {
-	return r.Gorm.Table(model.GetTable()).Where(conditions).Delete(entity).Error
+func (r *GormClient) FindOneBy(entity interface{}, conditions map[string]interface{}) error {
+	return r.Take(entity, conditions).Error
 }
 
-func NewDB(ctx context.Context) *gorm.DB {
+func (r *GormClient) Delete(entity interface{}, model Model, conditions string) error {
+	return r.Table(model.GetTable()).Where(conditions).Delete(entity).Error
+}
+
+func NewDB(ctx context.Context) *GormClient {
 	db, err := gorm.Open(postgres.Open(viper.GetString("postgresql_url")), &gorm.Config{})
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, "Postgres url is invalid", "db")
@@ -64,11 +68,11 @@ func NewDB(ctx context.Context) *gorm.DB {
 
 	logger.NewLogger().Write(logger.Info, "Postgre connection created", "db")
 
-	return db
+	return &GormClient{db}
 }
 
-func (r *Storage) Close() error {
-	db, err := r.Gorm.DB()
+func (r *GormClient) Close() error {
+	db, err := r.DB.DB()
 	if err != nil {
 		return err
 	}
