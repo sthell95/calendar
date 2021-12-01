@@ -1,6 +1,7 @@
 package service
 
 import (
+	"calendar.com/pkg/domain/repository/postgres"
 	"errors"
 	"testing"
 
@@ -10,7 +11,6 @@ import (
 	"github.com/spf13/viper"
 
 	"calendar.com/pkg/domain/entity"
-	"calendar.com/pkg/domain/repository"
 )
 
 func TestAuthService_CheckCredentials(t *testing.T) {
@@ -72,7 +72,7 @@ func TestAuthService_CheckCredentials(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
-			mockUserRepository := repository.NewMockUserRepository(ctrl)
+			mockUserRepository := postgres.NewMockUserRepository(ctrl)
 			mockUserRepository.EXPECT().FindOneBy(tt.condition).Return(tt.gotFromDb, nil).AnyTimes()
 			s := AuthService{
 				UserRepository: mockUserRepository,
@@ -113,7 +113,7 @@ func TestAuthService_GenerateToken(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.config()
 			ctrl := gomock.NewController(t)
-			mock := repository.NewMockUserRepository(ctrl)
+			mock := postgres.NewMockUserRepository(ctrl)
 			au := AuthService{
 				UserRepository: mock,
 			}

@@ -2,7 +2,7 @@
 // Source: ./pkg/domain/repository/user.go
 
 // Package repository is a generated GoMock package.
-package repository
+package postgres
 
 import (
 	reflect "reflect"

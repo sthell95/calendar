@@ -1,6 +1,7 @@
 package service
 
 import (
+	"calendar.com/pkg/domain/repository/postgres"
 	"context"
 	"fmt"
 	"testing"
@@ -11,14 +12,13 @@ import (
 	"github.com/golang/mock/gomock"
 
 	"calendar.com/pkg/domain/entity"
-	"calendar.com/pkg/domain/repository"
 )
 
 func TestEventService_Create(t *testing.T) {
 	tests := []struct {
 		name    string
 		event   func() entity.Event
-		mock    func(t *testing.T, e entity.Event) repository.EventRepository
+		mock    func(t *testing.T, e entity.Event) postgres.EventRepository
 		wantErr error
 	}{
 		{
@@ -28,9 +28,9 @@ func TestEventService_Create(t *testing.T) {
 
 				return entity.Event{Time: &add}
 			},
-			mock: func(t *testing.T, e entity.Event) repository.EventRepository {
+			mock: func(t *testing.T, e entity.Event) postgres.EventRepository {
 				ctrl := gomock.NewController(t)
-				eventRepository := repository.NewMockEventRepository(ctrl)
+				eventRepository := postgres.NewMockEventRepository(ctrl)
 				eventRepository.
 					EXPECT().
 					Create(gomock.Any(), &e).Do(func(a, b interface{}) {
@@ -49,9 +49,9 @@ func TestEventService_Create(t *testing.T) {
 
 				return entity.Event{Time: &add}
 			},
-			mock: func(t *testing.T, e entity.Event) repository.EventRepository {
+			mock: func(t *testing.T, e entity.Event) postgres.EventRepository {
 				ctrl := gomock.NewController(t)
-				eventRepository := repository.NewMockEventRepository(ctrl)
+				eventRepository := postgres.NewMockEventRepository(ctrl)
 
 				return eventRepository
 			},
@@ -74,7 +74,7 @@ func TestEventService_Update(t *testing.T) {
 	tests := []struct {
 		name    string
 		event   func() entity.Event
-		mock    func(t *testing.T, e entity.Event) repository.EventRepository
+		mock    func(t *testing.T, e entity.Event) postgres.EventRepository
 		wantErr error
 	}{
 		{
@@ -84,9 +84,9 @@ func TestEventService_Update(t *testing.T) {
 
 				return entity.Event{Time: &add}
 			},
-			mock: func(t *testing.T, e entity.Event) repository.EventRepository {
+			mock: func(t *testing.T, e entity.Event) postgres.EventRepository {
 				ctrl := gomock.NewController(t)
-				eventRepository := repository.NewMockEventRepository(ctrl)
+				eventRepository := postgres.NewMockEventRepository(ctrl)
 				eventRepository.
 					EXPECT().
 					Update(gomock.Any(), &e).
@@ -103,9 +103,9 @@ func TestEventService_Update(t *testing.T) {
 
 				return entity.Event{Time: &add}
 			},
-			mock: func(t *testing.T, e entity.Event) repository.EventRepository {
+			mock: func(t *testing.T, e entity.Event) postgres.EventRepository {
 				ctrl := gomock.NewController(t)
-				eventRepository := repository.NewMockEventRepository(ctrl)
+				eventRepository := postgres.NewMockEventRepository(ctrl)
 
 				return eventRepository
 			},

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"calendar.com/pkg/domain/repository/postgres"
 	"context"
 	"fmt"
 	"time"
@@ -10,7 +11,6 @@ import (
 	"github.com/gofrs/uuid"
 
 	"calendar.com/pkg/domain/entity"
-	"calendar.com/pkg/domain/repository"
 )
 
 type Event interface {
@@ -25,7 +25,7 @@ type Validators interface {
 }
 
 type EventService struct {
-	Repository repository.EventRepository
+	Repository postgres.EventRepository
 }
 
 type ValidateEntity struct{}
@@ -87,7 +87,7 @@ func (*ValidateEntity) ValidateTime(t *time.Time) bool {
 	return t.After(time.Now())
 }
 
-func NewEventService(repo repository.EventRepository) *EventService {
+func NewEventService(repo postgres.EventRepository) *EventService {
 	return &EventService{
 		Repository: repo,
 	}

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"calendar.com/pkg/domain/repository/postgres"
 	"context"
 	"fmt"
 	"net/http"
@@ -14,7 +15,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"calendar.com/pkg/domain/entity"
-	"calendar.com/pkg/domain/repository"
 	"calendar.com/pkg/logger"
 )
 
@@ -43,7 +43,7 @@ func (NotAuthorized) Error() string {
 }
 
 type AuthService struct {
-	UserRepository repository.UserRepository
+	UserRepository postgres.UserRepository
 }
 
 type Credentials interface {
@@ -162,7 +162,7 @@ func Validate(r *http.Request) (uuid.UUID, error) {
 	return claims.UserId, nil
 }
 
-func NewAuthService(repo repository.UserRepository) *AuthService {
+func NewAuthService(repo postgres.UserRepository) *AuthService {
 	return &AuthService{
 		UserRepository: repo,
 	}

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"calendar.com/pkg/domain/repository/postgres"
 	"context"
 	"fmt"
 	"os"
@@ -10,7 +11,6 @@ import (
 
 	"calendar.com/config"
 	"calendar.com/pkg/controller"
-	"calendar.com/pkg/domain/repository"
 	"calendar.com/pkg/domain/service"
 	"calendar.com/pkg/logger"
 	"calendar.com/pkg/storage"
@@ -33,9 +33,9 @@ func main() {
 	}()
 
 	storageClient := storage.NewClient(ctx)
-	eventRepository := repository.NewEventRepository(storageClient)
+	eventRepository := postgres.NewEventRepository(storageClient)
 	eventService := service.NewEventService(eventRepository)
-	userRepository := repository.NewUserRepository(storageClient)
+	userRepository := postgres.NewUserRepository(storageClient)
 	authService := service.NewAuthService(userRepository)
 	c := controller.NewController(eventService, authService)
 	handlers := new(config.Handlers)
