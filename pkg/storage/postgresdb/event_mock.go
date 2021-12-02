@@ -2,15 +2,16 @@
 // Source: ./pkg/domain/repository/event.go
 
 // Package repository is a generated GoMock package.
-package postgres
+package postgresdb
 
 import (
 	context "context"
 	reflect "reflect"
 
-	entity "calendar.com/pkg/domain/entity"
-	uuid "github.com/gofrs/uuid"
 	gomock "github.com/golang/mock/gomock"
+	uuid "github.com/google/uuid"
+
+	entity "calendar.com/pkg/domain/entity"
 )
 
 // MockEventRepository is a mock of EventRepository interface.

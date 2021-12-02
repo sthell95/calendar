@@ -9,9 +9,10 @@ import (
 	reflect "reflect"
 	time "time"
 
-	entity "calendar.com/pkg/domain/entity"
-	uuid "github.com/gofrs/uuid"
 	gomock "github.com/golang/mock/gomock"
+	uuid "github.com/google/uuid"
+
+	entity "calendar.com/pkg/domain/entity"
 )
 
 // MockEvent is a mock of Event interface.

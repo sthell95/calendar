@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gofrs/uuid"
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/opentracing/opentracing-go"
 
@@ -162,7 +162,7 @@ func (c *Controller) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id := uuid.FromStringOrNil(eventId)
+	id, err := uuid.Parse(eventId)
 	ctx = context.WithValue(ctx, entity.EventIdKey, id)
 	entityEvent, err := event.RequestToEntity(ctx)
 	if err != nil {
@@ -195,10 +195,16 @@ func (c *Controller) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id := uuid.FromStringOrNil(eventId)
+	id, err := uuid.Parse(eventId)
+	if err != nil {
+		logger.NewLogger().Write(logger.Error, err.Error(), "delete-event")
+		response.NewPrint().PrettyPrint(w, Error{Message: err.Error()}, response.WithCode(http.StatusBadRequest))
+		return
+	}
+
 	userId := r.Context().Value(middleware.UserId).(uuid.UUID)
 	e := entity.Event{ID: id, User: entity.User{ID: userId}}
-	err := c.EventService.Delete(ctx, &e)
+	err = c.EventService.Delete(ctx, &e)
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "delete-event")
 		response.NewPrint().PrettyPrint(w, Error{Message: err.Error()}, response.WithCode(http.StatusBadRequest))

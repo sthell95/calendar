@@ -16,8 +16,8 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/gofrs/uuid"
 	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	"calendar.com/middleware"
@@ -45,7 +45,7 @@ func TestController_Create(t *testing.T) {
 				return mock
 			},
 			ctx: func() context.Context {
-				userId, _ := uuid.FromString("62b45338-ea71-4eaa-b5dd-0b29c752ad1c")
+				userId, _ := uuid.Parse("62b45338-ea71-4eaa-b5dd-0b29c752ad1c")
 				ctx := context.WithValue(context.Background(), middleware.UserId, userId)
 
 				return ctx
@@ -96,7 +96,7 @@ func TestController_Create(t *testing.T) {
 				return mock
 			},
 			ctx: func() context.Context {
-				userId, _ := uuid.FromString("62b45338-ea71-4eaa-b5dd-0b29c752ad1c")
+				userId, _ := uuid.Parse("62b45338-ea71-4eaa-b5dd-0b29c752ad1c")
 				ctx := context.WithValue(context.Background(), middleware.UserId, userId)
 
 				return ctx
@@ -158,14 +158,14 @@ func TestRequestEvent_RequestToEntity(t *testing.T) {
 				}
 			},
 			ctx: func() *context.Context {
-				id, _ := uuid.FromString("62b45338-ea71-4eaa-b5dd-0b29c752ad1c")
+				id, _ := uuid.Parse("62b45338-ea71-4eaa-b5dd-0b29c752ad1c")
 				ctx := context.WithValue(context.Background(), middleware.UserId, id)
 				return &ctx
 			},
 			want: func() *entity.Event {
 				t, _ := time.Parse(entity.ISOLayout, "2021-12-10T15:04:05.000Z")
 				d, _ := time.ParseDuration(fmt.Sprintf("%vs", 3600))
-				id, _ := uuid.FromString("62b45338-ea71-4eaa-b5dd-0b29c752ad1c")
+				id, _ := uuid.Parse("62b45338-ea71-4eaa-b5dd-0b29c752ad1c")
 				return &entity.Event{
 					Title:       "Test title",
 					Description: "description",
@@ -210,7 +210,7 @@ func TestRequestEvent_RequestToEntity(t *testing.T) {
 				}
 			},
 			ctx: func() *context.Context {
-				id, _ := uuid.FromString("62b45338-ea71-4eaa-b5dd-0b29c752ad1c")
+				id, _ := uuid.Parse("62b45338-ea71-4eaa-b5dd-0b29c752ad1c")
 				ctx := context.WithValue(context.Background(), middleware.UserId, id)
 				return &ctx
 			},
@@ -278,7 +278,7 @@ func TestResponseEvent_EntityToResponse(t *testing.T) {
 		{
 			name: "Valid",
 			eventEntity: func() *entity.Event {
-				id, _ := uuid.FromString("62b45338-ea71-4eaa-b5dd-0b29c752ad1c")
+				id, _ := uuid.Parse("62b45338-ea71-4eaa-b5dd-0b29c752ad1c")
 				t, _ := time.Parse(entity.ISOLayout, "2021-12-10T15:04:05.000Z")
 				d, _ := time.ParseDuration(fmt.Sprintf("%vs", 3600))
 				return &entity.Event{
@@ -337,7 +337,7 @@ func TestController_Update(t *testing.T) {
 				return mock
 			},
 			ctx: func() context.Context {
-				userId, _ := uuid.FromString("62b45338-ea71-4eaa-b5dd-0b29c752ad1c")
+				userId, _ := uuid.Parse("62b45338-ea71-4eaa-b5dd-0b29c752ad1c")
 				ctx := context.WithValue(context.Background(), middleware.UserId, userId)
 
 				return ctx
@@ -364,7 +364,7 @@ func TestController_Update(t *testing.T) {
 				return mock
 			},
 			ctx: func() context.Context {
-				userId, _ := uuid.FromString("62b45338-ea71-4eaa-b5dd-0b29c752ad1c")
+				userId, _ := uuid.Parse("62b45338-ea71-4eaa-b5dd-0b29c752ad1c")
 				ctx := context.WithValue(context.Background(), middleware.UserId, userId)
 
 				return ctx
@@ -426,7 +426,7 @@ func TestController_Delete(t *testing.T) {
 				return mock
 			},
 			ctx: func() context.Context {
-				userId, _ := uuid.FromString("62b45338-ea71-4eaa-b5dd-0b29c752ad1c")
+				userId, _ := uuid.Parse("62b45338-ea71-4eaa-b5dd-0b29c752ad1c")
 				ctx := context.WithValue(context.Background(), middleware.UserId, userId)
 
 				return ctx
@@ -443,7 +443,7 @@ func TestController_Delete(t *testing.T) {
 				return mock
 			},
 			ctx: func() context.Context {
-				userId, _ := uuid.FromString("62b45338-ea71-4eaa-b5dd-0b29c752ad1c")
+				userId, _ := uuid.Parse("62b45338-ea71-4eaa-b5dd-0b29c752ad1c")
 				ctx := context.WithValue(context.Background(), middleware.UserId, userId)
 
 				return ctx
@@ -461,7 +461,7 @@ func TestController_Delete(t *testing.T) {
 				return mock
 			},
 			ctx: func() context.Context {
-				userId, _ := uuid.FromString("62b45338-ea71-4eaa-b5dd-0b29c752ad1c")
+				userId, _ := uuid.Parse("62b45338-ea71-4eaa-b5dd-0b29c752ad1c")
 				ctx := context.WithValue(context.Background(), middleware.UserId, userId)
 
 				return ctx
@@ -474,7 +474,7 @@ func TestController_Delete(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := tt.ctx()
-			eventId, _ := uuid.FromString(tt.eventId)
+			eventId, _ := uuid.Parse(tt.eventId)
 			e := entity.Event{
 				ID:   eventId,
 				User: entity.User{ID: ctx.Value(middleware.UserId).(uuid.UUID)},

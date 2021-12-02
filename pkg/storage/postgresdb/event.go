@@ -1,19 +1,20 @@
-package postgres
+package postgresdb
 
 import (
 	"context"
 	"fmt"
 	"time"
 
-	"github.com/gofrs/uuid"
+	"github.com/google/uuid"
 	"github.com/opentracing/opentracing-go"
 	"gorm.io/gorm"
 
 	"calendar.com/pkg/domain/entity"
-	"calendar.com/pkg/storage"
 )
 
-type eventPut struct {
+const eventTable = "events"
+
+type event struct {
 	ID          uuid.UUID     `gorm:"type:uuid;default:uuid_generate_v4()"`
 	Title       string        `gorm:"type:varchar(100);not null"`
 	Description string        `gorm:"type:text"`
@@ -47,28 +48,17 @@ type EventRepository interface {
 	FindOneById(*uuid.UUID) (*entity.Event, error)
 }
 
-type EventModel struct{}
+type eventModel struct{}
 
-type Event struct {
-	repo storage.Repository
-}
-
-func (ev *Event) Create(ctx context.Context, e *entity.Event) error {
+func (c *Client) Create(ctx context.Context, e *entity.Event) error {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "create-event-repository")
 	defer span.Finish()
 
-	t := time.Now()
-	m := &eventPut{
-		Title:       e.Title,
-		Description: e.Description,
-		Timezone:    e.Timezone,
-		Time:        &t,
-		Duration:    e.Duration,
-		Notes:       e.Notes,
-		User:        e.User.ID,
-	}
+	*e.Time = time.Now()
+	em := eventModel{}
+	m := em.toModel(e)
 
-	err := ev.repo.Create(m, EventModel{})
+	err := c.db.Table(eventTable).Create(m).Error
 	if err != nil {
 		return err
 	}
@@ -77,23 +67,15 @@ func (ev *Event) Create(ctx context.Context, e *entity.Event) error {
 	return nil
 }
 
-func (ev *Event) Update(ctx context.Context, e *entity.Event) error {
+func (c *Client) Update(ctx context.Context, e *entity.Event) error {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "update-event-repository")
 	defer span.Finish()
 
-	m := &eventPut{
-		ID:          e.ID,
-		Title:       e.Title,
-		Description: e.Description,
-		Timezone:    e.Timezone,
-		Time:        e.Time,
-		Duration:    e.Duration,
-		Notes:       e.Notes,
-		User:        e.User.ID,
-	}
+	em := eventModel{}
+	m := em.toModel(e)
 
 	condition := fmt.Sprintf(`"user" = '%v'`, e.User.ID)
-	err := ev.repo.Update(m, EventModel{}, condition)
+	err := c.db.Table(eventTable).Where(condition).Updates(m).Error
 	if err != nil {
 		return err
 	}
@@ -101,48 +83,61 @@ func (ev *Event) Update(ctx context.Context, e *entity.Event) error {
 	return nil
 }
 
-func (ev *eventPut) BeforeUpdate(tx *gorm.DB) error {
+func (ev *event) BeforeUpdate(tx *gorm.DB) error {
 	return tx.Where(fmt.Sprintf("event_id = '%v'", ev.ID)).Delete(&entity.Note{}).Error
 }
 
-func (e *Event) FindOneById(id *uuid.UUID) (*entity.Event, error) {
-	var model *eventGet
-	err := e.repo.FindById(model, *id)
+func (c *Client) FindOneById(id *uuid.UUID) (*entity.Event, error) {
+	var e *event
+	err := c.db.First(e, *id).Error
 	if err != nil {
 		return nil, err
 	}
 
-	event := entity.Event{
-		Title:       model.Title,
-		Description: "",
-		Timezone:    "",
-		Time:        nil,
-		Duration:    0,
-		User:        entity.User{},
-		Notes:       nil,
-	}
-
-	return &event, nil
+	em := eventModel{}
+	return em.toDomainModel(e), nil
 }
 
-func (e *Event) Delete(ctx context.Context, event *entity.Event) error {
+func (c *Client) Delete(ctx context.Context, event *entity.Event) error {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "delete-event-repository")
 	defer span.Finish()
 
-	c := fmt.Sprintf(`"user" = '%v'`, event.User.ID)
+	conditions := fmt.Sprintf(`"user" = '%v'`, event.User.ID)
 	m := eventDelete{
 		ID:   event.ID.String(),
 		User: event.ID,
 	}
-	return e.repo.Delete(m, EventModel{}, c)
+	return c.db.Table(eventTable).Where(conditions).Delete(m).Error
 }
 
-func NewEventRepository(repo storage.Repository) *Event {
-	return &Event{
-		repo: repo,
+func (*eventModel) toModel(e *entity.Event) *event {
+	return &event{
+		ID:          e.ID,
+		Title:       e.Title,
+		Description: e.Description,
+		Timezone:    e.Timezone,
+		Time:        e.Time,
+		Duration:    e.Duration,
+		User:        e.User.ID,
+		Notes:       e.Notes,
 	}
 }
 
-func (EventModel) GetTable() string {
-	return "events"
+func (*eventModel) toDomainModel(e *event) *entity.Event {
+	return &entity.Event{
+		ID:          e.ID,
+		Title:       e.Title,
+		Description: e.Description,
+		Timezone:    e.Timezone,
+		Time:        e.Time,
+		Duration:    e.Duration,
+		User:        entity.User{ID: e.User},
+		Notes:       e.Notes,
+	}
+}
+
+func NewRepository(db *gorm.DB) *Client {
+	return &Client{
+		db: db,
+	}
 }

@@ -3,7 +3,7 @@ package entity
 import (
 	"time"
 
-	"github.com/gofrs/uuid"
+	"github.com/google/uuid"
 )
 
 const ISOLayout = "2006-01-02T15:04:05.000Z"

@@ -8,7 +8,7 @@ services:
       - "5432:5432"
     volumes:
       - ./initdb.d:/docker-entrypoint-initdb.d/
-      - postgres:/var/lib/postgresql/data/
+      - postgresdb:/var/lib/postgresql/data/
     environment:
       POSTGRES_DB: gotest
       POSTGRES_USER: gouser
@@ -36,13 +36,13 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: gouser
       MONGO_INITDB_ROOT_PASSWORD: gopassword
-      MONGO_DATA_DIR: ./database-data/mongo
+      MONGO_DATA_DIR: ./database-data/mongodb
       MONGO_LOG_DIR: /dev/null
     ports:
       - "27017:27017"
 
 volumes:
   postgres:
-    name: postgres
+    name: postgresdb
   mongodb:
     name: mongodb

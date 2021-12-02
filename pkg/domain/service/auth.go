@@ -1,15 +1,16 @@
 package service
 
 import (
-	"calendar.com/pkg/domain/repository/postgres"
 	"context"
 	"fmt"
 	"net/http"
 	"os"
 	"time"
 
-	"github.com/gofrs/uuid"
+	"calendar.com/pkg/storage/postgresdb"
+
 	"github.com/golang-jwt/jwt"
+	"github.com/google/uuid"
 	"github.com/opentracing/opentracing-go"
 	"github.com/spf13/viper"
 	"golang.org/x/crypto/bcrypt"
@@ -33,7 +34,7 @@ func (PasswordNotMatched) Error() string {
 type UserNotfound struct{}
 
 func (UserNotfound) Error() string {
-	return "User not found"
+	return "Client not found"
 }
 
 type NotAuthorized struct{}
@@ -43,7 +44,7 @@ func (NotAuthorized) Error() string {
 }
 
 type AuthService struct {
-	UserRepository postgres.UserRepository
+	UserRepository postgresdb.UserRepository
 }
 
 type Credentials interface {
@@ -162,7 +163,7 @@ func Validate(r *http.Request) (uuid.UUID, error) {
 	return claims.UserId, nil
 }
 
-func NewAuthService(repo postgres.UserRepository) *AuthService {
+func NewAuthService(repo postgresdb.UserRepository) *AuthService {
 	return &AuthService{
 		UserRepository: repo,
 	}

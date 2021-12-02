@@ -1,11 +1,23 @@
 package main
 
 import (
-	"calendar.com/pkg/domain/repository/postgres"
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
+
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"calendar.com/pkg/storage/mongodb"
+
+	"calendar.com/pkg/domain/repository"
+
+	"calendar.com/pkg/storage/postgresdb"
 
 	"github.com/spf13/viper"
 
@@ -13,7 +25,6 @@ import (
 	"calendar.com/pkg/controller"
 	"calendar.com/pkg/domain/service"
 	"calendar.com/pkg/logger"
-	"calendar.com/pkg/storage"
 )
 
 func main() {
@@ -32,16 +43,30 @@ func main() {
 		cancel()
 	}()
 
-	storageClient := storage.NewClient(ctx)
-	eventRepository := postgres.NewEventRepository(storageClient)
-	eventService := service.NewEventService(eventRepository)
-	userRepository := postgres.NewUserRepository(storageClient)
-	authService := service.NewAuthService(userRepository)
+	mongoClient, err := mongo.Connect(ctx, options.Client().ApplyURI(viper.GetString("mongo_url")))
+	if err != nil {
+		logger.NewLogger().Write(logger.Error, "Mongo url is invalid", "db")
+		log.Fatalln(err)
+	}
+
+	gormClient, err := gorm.Open(postgres.Open(viper.GetString("postgresql_url")), &gorm.Config{})
+	if err != nil {
+		logger.NewLogger().Write(logger.Error, "Postgres url is invalid", "db")
+		log.Fatalln(err)
+	}
+
+	eventMongoClient := mongodb.NewEventRepository(mongoClient)
+	eventPostgresClient := postgresdb.NewRepository(gormClient)
+	storageEventClient := repository.NewEventRepository(eventMongoClient, eventPostgresClient)
+
+	eventService := service.NewEventService(storageEventClient)
+
+	authService := service.NewAuthService(eventPostgresClient)
 	c := controller.NewController(eventService, authService)
 	handlers := new(config.Handlers)
 	handlers.NewHandler(*c)
 
-	err := config.Run(ctx, handlers.NewRouter())
+	err = config.Run(ctx, handlers.NewRouter())
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "serve")
 	}
