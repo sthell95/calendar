@@ -5,12 +5,14 @@
 package service
 
 import (
+	context "context"
 	reflect "reflect"
 	time "time"
 
-	entity "calendar.com/pkg/domain/entity"
-	uuid "github.com/gofrs/uuid"
 	gomock "github.com/golang/mock/gomock"
+	uuid "github.com/google/uuid"
+
+	entity "calendar.com/pkg/domain/entity"
 )
 
 // MockEvent is a mock of Event interface.
@@ -37,45 +39,45 @@ func (m *MockEvent) EXPECT() *MockEventMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockEvent) Create(arg0 *entity.Event) error {
+func (m *MockEvent) Create(arg0 context.Context, arg1 *entity.Event) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", arg0)
+	ret := m.ctrl.Call(m, "Create", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockEventMockRecorder) Create(arg0 interface{}) *gomock.Call {
+func (mr *MockEventMockRecorder) Create(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockEvent)(nil).Create), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockEvent)(nil).Create), arg0, arg1)
 }
 
 // Delete mocks base method.
-func (m *MockEvent) Delete(arg0 *entity.Event) error {
+func (m *MockEvent) Delete(arg0 context.Context, arg1 *entity.Event) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", arg0)
+	ret := m.ctrl.Call(m, "Delete", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Delete indicates an expected call of Delete.
-func (mr *MockEventMockRecorder) Delete(arg0 interface{}) *gomock.Call {
+func (mr *MockEventMockRecorder) Delete(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockEvent)(nil).Delete), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockEvent)(nil).Delete), arg0, arg1)
 }
 
 // Update mocks base method.
-func (m *MockEvent) Update(arg0 *entity.Event) error {
+func (m *MockEvent) Update(arg0 context.Context, arg1 *entity.Event) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Update", arg0)
+	ret := m.ctrl.Call(m, "Update", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Update indicates an expected call of Update.
-func (mr *MockEventMockRecorder) Update(arg0 interface{}) *gomock.Call {
+func (mr *MockEventMockRecorder) Update(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockEvent)(nil).Update), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockEvent)(nil).Update), arg0, arg1)
 }
 
 // MockValidators is a mock of Validators interface.

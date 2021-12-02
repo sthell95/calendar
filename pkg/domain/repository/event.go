@@ -2,43 +2,12 @@ package repository
 
 import (
 	"context"
-	"fmt"
-	"time"
+	"errors"
 
-	"github.com/gofrs/uuid"
-	"github.com/opentracing/opentracing-go"
-	"gorm.io/gorm"
+	"github.com/google/uuid"
 
 	"calendar.com/pkg/domain/entity"
-	"calendar.com/pkg/storage"
 )
-
-type eventPut struct {
-	ID          uuid.UUID     `gorm:"type:uuid;default:uuid_generate_v4()"`
-	Title       string        `gorm:"type:varchar(100);not null"`
-	Description string        `gorm:"type:text"`
-	Timezone    string        `gorm:"type:varchar;default 'Europe/Riga'"`
-	Time        *time.Time    `gorm:"type:timestamp; not null"`
-	Duration    time.Duration `gorm:"type:time not null"`
-	User        uuid.UUID     `gorm:"type:uuid;not null"`
-	Notes       []entity.Note `gorm:"foreignKey:EventID"`
-}
-
-type eventGet struct {
-	ID          string        `gorm:"type:uuid;default:uuid_generate_v4()"`
-	Title       string        `gorm:"type:varchar(100);not null"`
-	Description string        `gorm:"type:text"`
-	Timezone    string        `gorm:"type:varchar;default 'Europe/Riga'"`
-	Time        *time.Time    `gorm:"type:timestamp; not null"`
-	Duration    time.Duration `gorm:"type:time not null"`
-	User        uuid.UUID     `gorm:"type:uuid;not null"`
-	Notes       []entity.Note `gorm:"foreignKey:EventID"`
-}
-
-type eventDelete struct {
-	ID   string    `gorm:"type:uuid;default:uuid_generate_v4()"`
-	User uuid.UUID `gorm:"type:uuid;not null"`
-}
 
 type EventRepository interface {
 	Create(context.Context, *entity.Event) error
@@ -47,102 +16,51 @@ type EventRepository interface {
 	FindOneById(*uuid.UUID) (*entity.Event, error)
 }
 
-type EventModel struct{}
-
-type Event struct {
-	repo storage.Repository
+type Repo struct {
+	Repos []EventRepository
 }
 
-func (ev *Event) Create(ctx context.Context, e *entity.Event) error {
-	span, ctx := opentracing.StartSpanFromContext(ctx, "create-event-repository")
-	defer span.Finish()
-
-	t := time.Now()
-	m := &eventPut{
-		Title:       e.Title,
-		Description: e.Description,
-		Timezone:    e.Timezone,
-		Time:        &t,
-		Duration:    e.Duration,
-		Notes:       e.Notes,
-		User:        e.User.ID,
-	}
-
-	err := ev.repo.Create(m, EventModel{})
-	if err != nil {
-		return err
-	}
-
-	e.ID = m.ID
-	return nil
+func NewEventRepository(repos ...EventRepository) *Repo {
+	return &Repo{Repos: repos}
 }
 
-func (ev *Event) Update(ctx context.Context, e *entity.Event) error {
-	span, ctx := opentracing.StartSpanFromContext(ctx, "update-event-repository")
-	defer span.Finish()
+func (r *Repo) Create(ctx context.Context, event *entity.Event) error {
+	var err error
+	event.ID = uuid.New()
 
-	m := &eventPut{
-		ID:          e.ID,
-		Title:       e.Title,
-		Description: e.Description,
-		Timezone:    e.Timezone,
-		Time:        e.Time,
-		Duration:    e.Duration,
-		Notes:       e.Notes,
-		User:        e.User.ID,
-	}
-
-	condition := fmt.Sprintf(`"user" = '%v'`, e.User.ID)
-	err := ev.repo.Update(m, EventModel{}, condition)
-	if err != nil {
-		return err
+	for i := range r.Repos {
+		if err = r.Repos[i].Create(ctx, event); err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
-func (ev *eventPut) BeforeUpdate(tx *gorm.DB) error {
-	return tx.Where(fmt.Sprintf("event_id = '%v'", ev.ID)).Delete(&entity.Note{}).Error
-}
-
-func (e *Event) FindOneById(id *uuid.UUID) (*entity.Event, error) {
-	var model *eventGet
-	err := e.repo.FindById(model, *id)
-	if err != nil {
-		return nil, err
+func (r *Repo) Update(ctx context.Context, event *entity.Event) error {
+	for i := range r.Repos {
+		if err := r.Repos[i].Update(ctx, event); err != nil {
+			return err
+		}
 	}
 
-	event := entity.Event{
-		Title:       model.Title,
-		Description: "",
-		Timezone:    "",
-		Time:        nil,
-		Duration:    0,
-		User:        entity.User{},
-		Notes:       nil,
-	}
-
-	return &event, nil
+	return nil
 }
 
-func (e *Event) Delete(ctx context.Context, event *entity.Event) error {
-	span, ctx := opentracing.StartSpanFromContext(ctx, "delete-event-repository")
-	defer span.Finish()
-
-	c := fmt.Sprintf(`"user" = '%v'`, event.User.ID)
-	m := eventDelete{
-		ID:   event.ID.String(),
-		User: event.ID,
+func (r *Repo) Delete(ctx context.Context, event *entity.Event) error {
+	for i := range r.Repos {
+		if err := r.Repos[i].Delete(ctx, event); err != nil {
+			return err
+		}
 	}
-	return e.repo.Delete(m, EventModel{}, c)
+
+	return nil
 }
 
-func NewEventRepository(repo storage.Repository) *Event {
-	return &Event{
-		repo: repo,
+func (r *Repo) FindOneById(id *uuid.UUID) (*entity.Event, error) {
+	for i := range r.Repos {
+		return r.Repos[i].FindOneById(id)
 	}
-}
 
-func (EventModel) GetTable() string {
-	return "events"
+	return nil, errors.New("no providers")
 }

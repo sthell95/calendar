@@ -5,6 +5,7 @@
 package service
 
 import (
+	context "context"
 	reflect "reflect"
 
 	entity "calendar.com/pkg/domain/entity"
@@ -87,16 +88,16 @@ func (m *MockAuthorization) EXPECT() *MockAuthorizationMockRecorder {
 }
 
 // SignInProcess mocks base method.
-func (m *MockAuthorization) SignInProcess(c *entity.Credentials) (*entity.AuthToken, error) {
+func (m *MockAuthorization) SignInProcess(ctx context.Context, c *entity.Credentials) (*entity.AuthToken, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SignInProcess", c)
+	ret := m.ctrl.Call(m, "SignInProcess", ctx, c)
 	ret0, _ := ret[0].(*entity.AuthToken)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // SignInProcess indicates an expected call of SignInProcess.
-func (mr *MockAuthorizationMockRecorder) SignInProcess(c interface{}) *gomock.Call {
+func (mr *MockAuthorizationMockRecorder) SignInProcess(ctx, c interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SignInProcess", reflect.TypeOf((*MockAuthorization)(nil).SignInProcess), c)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SignInProcess", reflect.TypeOf((*MockAuthorization)(nil).SignInProcess), ctx, c)
 }

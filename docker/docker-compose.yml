@@ -1,13 +1,14 @@
 version: "3.9"
 
 services:
-  db:
+  postgres:
     image: postgres:alpine
+    restart: always
     ports:
       - "5432:5432"
     volumes:
       - ./initdb.d:/docker-entrypoint-initdb.d/
-      - database-data:/var/lib/postgresql/data/
+      - postgresdb:/var/lib/postgresql/data/
     environment:
       POSTGRES_DB: gotest
       POSTGRES_USER: gouser
@@ -27,6 +28,21 @@ services:
       - "14250:14250"
       - "9411:9411"
 
+  mongodb:
+    image: mongo:latest
+    restart: always
+    volumes:
+      - mongodb:/data/db/
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: gouser
+      MONGO_INITDB_ROOT_PASSWORD: gopassword
+      MONGO_DATA_DIR: ./database-data/mongodb
+      MONGO_LOG_DIR: /dev/null
+    ports:
+      - "27017:27017"
 
 volumes:
-  database-data:
+  postgres:
+    name: postgresdb
+  mongodb:
+    name: mongodb

@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"time"
 
+	"calendar.com/pkg/storage/postgresdb"
+
 	"github.com/opentracing/opentracing-go"
 
-	"github.com/gofrs/uuid"
+	"github.com/google/uuid"
 
 	"calendar.com/pkg/domain/entity"
-	"calendar.com/pkg/domain/repository"
 )
 
 type Event interface {
@@ -25,7 +26,7 @@ type Validators interface {
 }
 
 type EventService struct {
-	Repository repository.EventRepository
+	Repository postgresdb.EventRepository
 }
 
 type ValidateEntity struct{}
@@ -33,7 +34,7 @@ type ValidateEntity struct{}
 type IncorrectTime struct{}
 
 func (IncorrectTime) Error() string {
-	return fmt.Sprintf("Event time is not correct please choose time in the future")
+	return fmt.Sprintf("EventClient time is not correct please choose time in the future")
 }
 
 type Forbidden struct{}
@@ -45,7 +46,7 @@ func (Forbidden) Error() string {
 type EventNotFound struct{}
 
 func (EventNotFound) Error() string {
-	return fmt.Sprintf("Event not found")
+	return fmt.Sprintf("EventClient not found")
 }
 
 func (es *EventService) Create(ctx context.Context, e *entity.Event) error {
@@ -87,7 +88,7 @@ func (*ValidateEntity) ValidateTime(t *time.Time) bool {
 	return t.After(time.Now())
 }
 
-func NewEventService(repo repository.EventRepository) *EventService {
+func NewEventService(repo postgresdb.EventRepository) *EventService {
 	return &EventService{
 		Repository: repo,
 	}

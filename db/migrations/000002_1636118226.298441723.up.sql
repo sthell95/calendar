@@ -6,5 +6,5 @@ CREATE TABLE IF NOT EXISTS events (
     date_from timestamp with time zone NOT NULL ,
     date_to timestamp with time zone NOT NULL,
     notes varchar ARRAY,
-    user uuid REFERENCES users(id)
+    "user" uuid REFERENCES users(id)
 );

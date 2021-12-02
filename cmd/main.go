@@ -3,25 +3,28 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
-
-	"github.com/opentracing/opentracing-go"
-	"github.com/uber/jaeger-lib/metrics"
-
 	"os/signal"
+
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"calendar.com/pkg/storage/mongodb"
+
+	"calendar.com/pkg/domain/repository"
+
+	"calendar.com/pkg/storage/postgresdb"
 
 	"github.com/spf13/viper"
 
 	"calendar.com/config"
 	"calendar.com/pkg/controller"
-	"calendar.com/pkg/domain/repository"
 	"calendar.com/pkg/domain/service"
 	"calendar.com/pkg/logger"
-	"calendar.com/pkg/storage"
-
-	"github.com/uber/jaeger-client-go"
-	jaegercfg "github.com/uber/jaeger-client-go/config"
-	jaegerlog "github.com/uber/jaeger-client-go/log"
 )
 
 func main() {
@@ -39,42 +42,29 @@ func main() {
 		logger.NewLogger().Write(logger.Error, fmt.Sprintf("system call: %+v", <-grace), "main")
 		cancel()
 	}()
-	db := storage.NewDB(ctx)
 
-	storages := storage.Storage{Gorm: db}
-	eventRepository := repository.NewEventRepository(storages)
-	eventService := service.NewEventService(eventRepository)
-	userRepository := repository.NewUserRepository(storages)
-	authService := service.NewAuthService(userRepository)
+	mongoClient, err := mongo.Connect(ctx, options.Client().ApplyURI(viper.GetString("mongo_url")))
+	if err != nil {
+		logger.NewLogger().Write(logger.Error, "Mongo url is invalid", "db")
+		log.Fatalln(err)
+	}
+
+	gormClient, err := gorm.Open(postgres.Open(viper.GetString("postgresql_url")), &gorm.Config{})
+	if err != nil {
+		logger.NewLogger().Write(logger.Error, "Postgres url is invalid", "db")
+		log.Fatalln(err)
+	}
+
+	eventMongoClient := mongodb.NewEventRepository(mongoClient)
+	eventPostgresClient := postgresdb.NewRepository(gormClient)
+	storageEventClient := repository.NewEventRepository(eventMongoClient, eventPostgresClient)
+
+	eventService := service.NewEventService(storageEventClient)
+
+	authService := service.NewAuthService(eventPostgresClient)
 	c := controller.NewController(eventService, authService)
 	handlers := new(config.Handlers)
 	handlers.NewHandler(*c)
-
-	cfg := jaegercfg.Configuration{
-		ServiceName: "calendar",
-		Sampler: &jaegercfg.SamplerConfig{
-			Type:  jaeger.SamplerTypeConst,
-			Param: 1,
-		},
-		Reporter: &jaegercfg.ReporterConfig{
-			LogSpans: true,
-		},
-	}
-
-	jLogger := jaegerlog.StdLogger
-	jMetricsFactory := metrics.NullFactory
-
-	tracer, closer, err := cfg.NewTracer(
-		jaegercfg.Logger(jLogger),
-		jaegercfg.Metrics(jMetricsFactory),
-	)
-	if err != nil {
-		logger.NewLogger().Write(logger.Error, err.Error(), "serve")
-	}
-
-	defer closer.Close()
-
-	opentracing.SetGlobalTracer(tracer)
 
 	err = config.Run(ctx, handlers.NewRouter())
 	if err != nil {

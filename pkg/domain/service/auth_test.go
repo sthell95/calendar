@@ -4,13 +4,14 @@ import (
 	"errors"
 	"testing"
 
+	"calendar.com/pkg/storage/postgresdb"
+
 	"github.com/stretchr/testify/require"
 
 	"github.com/golang/mock/gomock"
 	"github.com/spf13/viper"
 
 	"calendar.com/pkg/domain/entity"
-	"calendar.com/pkg/domain/repository"
 )
 
 func TestAuthService_CheckCredentials(t *testing.T) {
@@ -57,7 +58,7 @@ func TestAuthService_CheckCredentials(t *testing.T) {
 			wantMessage: errors.New("Password doesn't match"),
 		},
 		{
-			name: "User not found",
+			name: "Client not found",
 			args: entity.Credentials{
 				Login:    "test",
 				Password: "$2a$04$ESxZs3B48bQwdoWs03A8w.uVgiBZaHAC5Hoj1me9Ru0V/zFM4XIDG",
@@ -66,13 +67,13 @@ func TestAuthService_CheckCredentials(t *testing.T) {
 				"login": "test",
 			},
 			gotFromDb:   nil,
-			wantMessage: errors.New("User not found"),
+			wantMessage: errors.New("Client not found"),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
-			mockUserRepository := repository.NewMockUserRepository(ctrl)
+			mockUserRepository := postgresdb.NewMockUserRepository(ctrl)
 			mockUserRepository.EXPECT().FindOneBy(tt.condition).Return(tt.gotFromDb, nil).AnyTimes()
 			s := AuthService{
 				UserRepository: mockUserRepository,
@@ -113,7 +114,7 @@ func TestAuthService_GenerateToken(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.config()
 			ctrl := gomock.NewController(t)
-			mock := repository.NewMockUserRepository(ctrl)
+			mock := postgresdb.NewMockUserRepository(ctrl)
 			au := AuthService{
 				UserRepository: mock,
 			}

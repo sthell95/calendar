@@ -1,8 +1,8 @@
 package entity
 
 import (
-	"github.com/gofrs/uuid"
 	"github.com/golang-jwt/jwt"
+	"github.com/google/uuid"
 )
 
 type Credentials struct {
