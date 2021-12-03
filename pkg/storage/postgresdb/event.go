@@ -25,17 +25,6 @@ type event struct {
 	Notes       []entity.Note `gorm:"foreignKey:EventID"`
 }
 
-type eventGet struct {
-	ID          string        `gorm:"type:uuid;default:uuid_generate_v4()"`
-	Title       string        `gorm:"type:varchar(100);not null"`
-	Description string        `gorm:"type:text"`
-	Timezone    string        `gorm:"type:varchar;default 'Europe/Riga'"`
-	Time        *time.Time    `gorm:"type:timestamp; not null"`
-	Duration    time.Duration `gorm:"type:time not null"`
-	User        uuid.UUID     `gorm:"type:uuid;not null"`
-	Notes       []entity.Note `gorm:"foreignKey:EventID"`
-}
-
 type eventDelete struct {
 	ID   string    `gorm:"type:uuid;default:uuid_generate_v4()"`
 	User uuid.UUID `gorm:"type:uuid;not null"`

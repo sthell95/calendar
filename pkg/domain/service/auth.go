@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"calendar.com/pkg/storage/postgresdb"
+	"calendar.com/pkg/domain/repository"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
@@ -18,6 +18,19 @@ import (
 	"calendar.com/pkg/domain/entity"
 	"calendar.com/pkg/logger"
 )
+
+type Credentials interface {
+	GenerateToken(*entity.Credentials) (*entity.AuthToken, error)
+	CheckCredentials(entity.Credentials) error
+}
+
+type Authorization interface {
+	SignInProcess(ctx context.Context, c *entity.Credentials) (*entity.AuthToken, error)
+}
+
+type AuthService struct {
+	UserRepository repository.UserRepository
+}
 
 type InvalidCredentials struct{}
 
@@ -43,17 +56,10 @@ func (NotAuthorized) Error() string {
 	return "Not Authorized"
 }
 
-type AuthService struct {
-	UserRepository postgresdb.UserRepository
-}
-
-type Credentials interface {
-	GenerateToken(*entity.Credentials) (*entity.AuthToken, error)
-	CheckCredentials(entity.Credentials) error
-}
-
-type Authorization interface {
-	SignInProcess(ctx context.Context, c *entity.Credentials) (*entity.AuthToken, error)
+func NewAuthService(repo repository.UserRepository) *AuthService {
+	return &AuthService{
+		UserRepository: repo,
+	}
 }
 
 func (s *AuthService) SignInProcess(ctx context.Context, c *entity.Credentials) (*entity.AuthToken, error) {
@@ -107,9 +113,7 @@ func (AuthService) GenerateToken(u *entity.User) (*entity.AuthToken, error) {
 }
 
 func (s AuthService) CheckCredentials(c entity.Credentials) (*entity.User, error) {
-	u, err := s.UserRepository.FindOneBy(map[string]interface{}{
-		"login": c.Login,
-	})
+	u, err := s.UserRepository.FindOneByLogin(context.Background(), c.Login)
 	if err != nil || u == nil {
 		return nil, UserNotfound{}
 	}
@@ -161,10 +165,4 @@ func Validate(r *http.Request) (uuid.UUID, error) {
 		return uuid.UUID{}, err
 	}
 	return claims.UserId, nil
-}
-
-func NewAuthService(repo postgresdb.UserRepository) *AuthService {
-	return &AuthService{
-		UserRepository: repo,
-	}
 }

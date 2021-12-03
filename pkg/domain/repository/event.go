@@ -16,15 +16,15 @@ type EventRepository interface {
 	FindOneById(*uuid.UUID) (*entity.Event, error)
 }
 
-type Repo struct {
+type EventRepo struct {
 	Repos []EventRepository
 }
 
-func NewEventRepository(repos ...EventRepository) *Repo {
-	return &Repo{Repos: repos}
+func NewEventRepository(repos ...EventRepository) *EventRepo {
+	return &EventRepo{Repos: repos}
 }
 
-func (r *Repo) Create(ctx context.Context, event *entity.Event) error {
+func (r *EventRepo) Create(ctx context.Context, event *entity.Event) error {
 	var err error
 	event.ID = uuid.New()
 
@@ -37,7 +37,7 @@ func (r *Repo) Create(ctx context.Context, event *entity.Event) error {
 	return nil
 }
 
-func (r *Repo) Update(ctx context.Context, event *entity.Event) error {
+func (r *EventRepo) Update(ctx context.Context, event *entity.Event) error {
 	for i := range r.Repos {
 		if err := r.Repos[i].Update(ctx, event); err != nil {
 			return err
@@ -47,7 +47,7 @@ func (r *Repo) Update(ctx context.Context, event *entity.Event) error {
 	return nil
 }
 
-func (r *Repo) Delete(ctx context.Context, event *entity.Event) error {
+func (r *EventRepo) Delete(ctx context.Context, event *entity.Event) error {
 	for i := range r.Repos {
 		if err := r.Repos[i].Delete(ctx, event); err != nil {
 			return err
@@ -57,7 +57,7 @@ func (r *Repo) Delete(ctx context.Context, event *entity.Event) error {
 	return nil
 }
 
-func (r *Repo) FindOneById(id *uuid.UUID) (*entity.Event, error) {
+func (r *EventRepo) FindOneById(id *uuid.UUID) (*entity.Event, error) {
 	for i := range r.Repos {
 		return r.Repos[i].FindOneById(id)
 	}
