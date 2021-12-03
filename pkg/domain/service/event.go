@@ -49,6 +49,12 @@ func (EventNotFound) Error() string {
 	return fmt.Sprintf("EventClient not found")
 }
 
+func NewEventService(repo postgresdb.EventRepository) *EventService {
+	return &EventService{
+		Repository: repo,
+	}
+}
+
 func (es *EventService) Create(ctx context.Context, e *entity.Event) error {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "create-event-process")
 	defer span.Finish()
@@ -86,10 +92,4 @@ func (*ValidateEntity) IsAuthor(userId *uuid.UUID, eventUserId *uuid.UUID) bool 
 
 func (*ValidateEntity) ValidateTime(t *time.Time) bool {
 	return t.After(time.Now())
-}
-
-func NewEventService(repo postgresdb.EventRepository) *EventService {
-	return &EventService{
-		Repository: repo,
-	}
 }

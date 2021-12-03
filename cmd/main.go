@@ -54,14 +54,17 @@ func main() {
 		logger.NewLogger().Write(logger.Error, "Postgres url is invalid", "db")
 		log.Fatalln(err)
 	}
+	postgresClient := postgresdb.NewRepository(gormClient)
 
 	eventMongoClient := mongodb.NewEventRepository(mongoClient)
-	eventPostgresClient := postgresdb.NewRepository(gormClient)
-	storageEventClient := repository.NewEventRepository(eventMongoClient, eventPostgresClient)
+	storageEventClient := repository.NewEventRepository(eventMongoClient, postgresClient)
+
+	userMongoClient := mongodb.NewUserRepository(mongoClient)
+	userRepository := repository.NewUserRepository(userMongoClient, postgresClient)
 
 	eventService := service.NewEventService(storageEventClient)
+	authService := service.NewAuthService(userRepository)
 
-	authService := service.NewAuthService(eventPostgresClient)
 	c := controller.NewController(eventService, authService)
 	handlers := new(config.Handlers)
 	handlers.NewHandler(*c)

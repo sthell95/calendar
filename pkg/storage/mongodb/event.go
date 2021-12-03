@@ -35,7 +35,7 @@ func (c *EventClient) Create(ctx context.Context, e *entity.Event) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	eventModel := toModel(e)
+	eventModel := eventToModel(e)
 	id, err := c.Client.Database(viper.GetString("mongo_db")).Collection(eventTable).InsertOne(ctx, eventModel)
 	e.ID, err = uuid.Parse(id.InsertedID.(string))
 
@@ -46,7 +46,7 @@ func (c *EventClient) Update(ctx context.Context, e *entity.Event) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	eventModel := bson.D{{"$set", toModel(e)}}
+	eventModel := bson.D{{"$set", eventToModel(e)}}
 	_, err := c.Client.Database(viper.GetString("mongo_db")).Collection(eventTable).UpdateByID(ctx, e.ID.String(), eventModel)
 
 	return err
@@ -66,7 +66,7 @@ func (c *EventClient) FindOneById(id *uuid.UUID) (*entity.Event, error) {
 	return nil, errors.New("not implemented")
 }
 
-func toModel(e *entity.Event) *event {
+func eventToModel(e *entity.Event) *event {
 	notes := []string{}
 	for _, note := range e.Notes {
 		notes = append(notes, note.Note)
@@ -84,7 +84,7 @@ func toModel(e *entity.Event) *event {
 	}
 }
 
-func toDomainModel(e *event) *entity.Event {
+func modelToEvent(e *event) *entity.Event {
 	eventID, _ := uuid.Parse(e.ID)
 	userId, _ := uuid.Parse(e.User)
 
