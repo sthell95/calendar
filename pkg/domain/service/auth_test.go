@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -18,7 +19,7 @@ func TestAuthService_CheckCredentials(t *testing.T) {
 	tests := []struct {
 		name        string
 		args        entity.Credentials
-		condition   map[string]interface{}
+		condition   string
 		gotFromDb   *entity.User
 		wantMessage error
 		wantStruct  *entity.User
@@ -29,9 +30,7 @@ func TestAuthService_CheckCredentials(t *testing.T) {
 				Login:    "test",
 				Password: "testtest",
 			},
-			condition: map[string]interface{}{
-				"login": "test",
-			},
+			condition: "test",
 			gotFromDb: &entity.User{
 				Login:    "test",
 				Password: "$2a$04$ESxZs3B48bQwdoWs03A8w.uVgiBZaHAC5Hoj1me9Ru0V/zFM4XIDG",
@@ -48,9 +47,7 @@ func TestAuthService_CheckCredentials(t *testing.T) {
 				Login:    "test",
 				Password: "testtest1",
 			},
-			condition: map[string]interface{}{
-				"login": "test",
-			},
+			condition: "test",
 			gotFromDb: &entity.User{
 				Login:    "test",
 				Password: "$2a$04$ESxZs3B48bQwdoWs03A8w.uVgiBZaHAC5Hoj1me9Ru0V/zFM4XIDG",
@@ -63,9 +60,7 @@ func TestAuthService_CheckCredentials(t *testing.T) {
 				Login:    "test",
 				Password: "$2a$04$ESxZs3B48bQwdoWs03A8w.uVgiBZaHAC5Hoj1me9Ru0V/zFM4XIDG",
 			},
-			condition: map[string]interface{}{
-				"login": "test",
-			},
+			condition:   "test",
 			gotFromDb:   nil,
 			wantMessage: errors.New("Client not found"),
 		},
@@ -73,8 +68,9 @@ func TestAuthService_CheckCredentials(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
+			ctx := context.Background()
 			mockUserRepository := postgresdb.NewMockUserRepository(ctrl)
-			mockUserRepository.EXPECT().FindOneBy(tt.condition).Return(tt.gotFromDb, nil).AnyTimes()
+			mockUserRepository.EXPECT().FindOneByLogin(ctx, tt.condition).Return(tt.gotFromDb, nil).AnyTimes()
 			s := AuthService{
 				UserRepository: mockUserRepository,
 			}
