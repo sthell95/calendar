@@ -3,20 +3,29 @@ package config
 import (
 	"context"
 	"fmt"
+	"log"
+	"net"
 	"net/http"
 	"strings"
+
+	"google.golang.org/grpc"
 
 	"github.com/gorilla/mux"
 
 	"calendar.com/middleware"
 	"calendar.com/pkg/controller"
+	pg "calendar.com/proto"
 )
 
-type Handlers struct {
+type HTTPHandlers struct {
 	*controller.Controller
 }
 
-func Run(ctx context.Context, r *mux.Router) error {
+type gRPCHandlers struct {
+	pg.UnimplementedCalendarServer
+}
+
+func RunServer(ctx context.Context, r *mux.Router) error {
 	server := &http.Server{Addr: ":8000", Handler: r}
 
 	go func() {
@@ -27,7 +36,7 @@ func Run(ctx context.Context, r *mux.Router) error {
 	return server.ListenAndServe()
 }
 
-func (h *Handlers) NewRouter() *mux.Router {
+func (h *HTTPHandlers) NewRouter() *mux.Router {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/login", h.SignIn).Methods(http.MethodPost)
@@ -54,6 +63,25 @@ func (h *Handlers) NewRouter() *mux.Router {
 	return r
 }
 
-func (h *Handlers) NewHandler(c controller.Controller) {
+func NewRouter() error {
+	lis, err := net.Listen("tcp", ":50051")
+	if err != nil {
+		return err
+	}
+	defer lis.Close()
+
+	s := grpc.NewServer()
+	pg.RegisterCalendarServer(s, &gRPCHandlers{})
+	if err = s.Serve(lis); err != nil {
+		log.Fatalf("failed to serve %v\n", lis.Addr())
+	}
+	return nil
+}
+
+func (s *gRPCHandlers) Login(_ context.Context, _ *pg.Credentials) (*pg.Token, error) {
+	return &pg.Token{Token: "some token", ExpiresAt: 1234567890}, nil
+}
+
+func (h *HTTPHandlers) NewHandler(c controller.Controller) {
 	h.Controller = &c
 }

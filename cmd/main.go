@@ -66,10 +66,15 @@ func main() {
 	authService := service.NewAuthService(userRepository)
 
 	c := controller.NewController(eventService, authService)
-	handlers := new(config.Handlers)
+	handlers := new(config.HTTPHandlers)
 	handlers.NewHandler(*c)
 
-	err = config.Run(ctx, handlers.NewRouter())
+	err = config.RunServer(ctx, handlers.NewRouter())
+	if err != nil {
+		logger.NewLogger().Write(logger.Error, err.Error(), "serve")
+	}
+
+	err = config.NewRouter()
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "serve")
 	}
