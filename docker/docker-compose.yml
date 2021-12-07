@@ -8,9 +8,9 @@ services:
       - "5432:5432"
     volumes:
       - ./initdb.d:/docker-entrypoint-initdb.d/
-      - postgresdb:/var/lib/postgresql/data/
+      - ./postgresdb:/var/lib/postgresql/data/
     environment:
-      POSTGRES_DB: gotest
+      POSTGRES_DB: calendar
       POSTGRES_USER: gouser
       POSTGRES_PASSWORD: gopassword
 
@@ -32,7 +32,7 @@ services:
     image: mongo:latest
     restart: always
     volumes:
-      - mongodb:/data/db/
+      - ./mongodb:/data/db/
     environment:
       MONGO_INITDB_ROOT_USERNAME: gouser
       MONGO_INITDB_ROOT_PASSWORD: gopassword

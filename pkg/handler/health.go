@@ -1,4 +1,4 @@
-package controller
+package handler
 
 import (
 	"net/http"
@@ -6,7 +6,7 @@ import (
 	"calendar.com/pkg/response"
 )
 
-func (*Controller) HealthHandler(w http.ResponseWriter, _ *http.Request) {
+func (*handler.Controller) HealthHandler(w http.ResponseWriter, _ *http.Request) {
 	r := response.NewPrint()
 	r.PrettyPrint(w, "Im alive")
 }

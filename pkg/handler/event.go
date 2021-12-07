@@ -1,6 +1,7 @@
-package controller
+package handler
 
 import (
+	"calendar.com/pkg/domain/service"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -16,6 +17,10 @@ import (
 	"calendar.com/pkg/logger"
 	"calendar.com/pkg/response"
 )
+
+type EventHandler interface {
+	Create(w http.ResponseWriter, r *http.Request)
+}
 
 type RequestEvent struct {
 	ID          string   `json:"id"`
@@ -35,6 +40,10 @@ type ResponseEvent struct {
 	Time        string   `json:"time"`
 	Duration    int32    `json:"duration"`
 	Notes       []string `json:"notes"`
+}
+
+type Event struct {
+	service.Event
 }
 
 type ErrorUserContext struct{}
@@ -106,38 +115,33 @@ func (re *ResponseEvent) EntityToResponse(ctx context.Context, e entity.Event) {
 	}
 }
 
-func (c *Controller) Create(w http.ResponseWriter, r *http.Request) {
+func (c *Event) create(w http.ResponseWriter, r *http.Request) error {
 	span, ctx := opentracing.StartSpanFromContext(r.Context(), "create-event")
 	defer span.Finish()
 
 	var event RequestEvent
 	err := json.NewDecoder(r.Body).Decode(&event)
 	if err != nil {
-		logger.NewLogger().Write(logger.Error, err.Error(), "create-event")
-		response.NewPrint().PrettyPrint(w, Error{Message: err.Error()}, response.WithCode(http.StatusBadRequest))
-		return
+		return err
 	}
 
 	entityEvent, err := event.RequestToEntity(r.Context())
 	if err != nil {
-		logger.NewLogger().Write(logger.Error, err.Error(), "create-event")
-		response.NewPrint().PrettyPrint(w, Error{Message: err.Error()}, response.WithCode(http.StatusBadRequest))
-		return
+		return err
 	}
 
-	err = c.EventService.Create(ctx, entityEvent)
+	err = c.Event.Create(ctx, entityEvent)
 	if err != nil {
-		logger.NewLogger().Write(logger.Error, err.Error(), "create-event")
-		response.NewPrint().PrettyPrint(w, Error{Message: err.Error()}, response.WithCode(http.StatusBadRequest))
-		return
+		return err
 	}
 
 	re := &ResponseEvent{}
 	re.EntityToResponse(ctx, *entityEvent)
 	response.NewPrint().PrettyPrint(w, re)
+	return nil
 }
 
-func (c *Controller) Update(w http.ResponseWriter, r *http.Request) {
+func (c *Event) Update(w http.ResponseWriter, r *http.Request) {
 	span, ctx := opentracing.StartSpanFromContext(r.Context(), "update-event")
 	defer span.Finish()
 
@@ -171,7 +175,7 @@ func (c *Controller) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = c.EventService.Update(ctx, entityEvent)
+	err = c.Event.Update(ctx, entityEvent)
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "update-event")
 		response.NewPrint().PrettyPrint(w, Error{Message: err.Error()}, response.WithCode(http.StatusBadRequest))
@@ -183,7 +187,7 @@ func (c *Controller) Update(w http.ResponseWriter, r *http.Request) {
 	response.NewPrint().PrettyPrint(w, re)
 }
 
-func (c *Controller) Delete(w http.ResponseWriter, r *http.Request) {
+func (c *handler.Controller) Delete(w http.ResponseWriter, r *http.Request) {
 	span, ctx := opentracing.StartSpanFromContext(r.Context(), "delete-event")
 	span.SetTag("this", 999999999999)
 	defer span.Finish()

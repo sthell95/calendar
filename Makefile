@@ -6,6 +6,7 @@ export DSN=psql://gouser:gopassword@localhost:5432/gotest
 up:
 	@ echo "-> running docker"
 	cd docker && docker-compose up -d && CGO_ENABLED=1 go test -race ../...
+	make migrate
 .PHONEL: up
 
 down:
@@ -36,5 +37,5 @@ migration create:
 .PHONY: create
 
 migrate:
-	migrate -database postgres://gouser:gopassword@localhost:5432/gotest?sslmode=disable -path ./db/migrations/ up
+	migrate -database postgres://gouser:gopassword@localhost:5432/calendar?sslmode=disable -path ./db/migrations/ up
 .PHONY: migrate

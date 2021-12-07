@@ -2,26 +2,26 @@ package response
 
 import (
 	"encoding/json"
-	"net/http"
+	"io"
 )
 
 type Response interface {
-	PrettyPrint(http.ResponseWriter, interface{}, ...Options)
+	PrettyPrint(io.Writer, interface{}, ...Options)
 }
 
 type Resp struct{}
 
-func (r *Resp) PrettyPrint(w http.ResponseWriter, o interface{}, i ...Options) {
+func (r *Resp) PrettyPrint(w io.Writer, o interface{}, i ...Options) {
 	option := NewOptions()
 	for key := range i {
 		i[key](option)
 	}
 
-	for key, value := range option.Headers {
-		w.Header().Set(key, value)
-	}
+	//for key, value := range option.Headers {
+	//	w.Header().Set(key, value)
+	//}
 
-	w.WriteHeader(option.Code)
+	//w.WriteHeader(option.Code)
 	_ = json.NewEncoder(w).Encode(o)
 }
 

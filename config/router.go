@@ -13,12 +13,12 @@ import (
 	"github.com/gorilla/mux"
 
 	"calendar.com/middleware"
-	"calendar.com/pkg/controller"
+	"calendar.com/pkg/handler"
 	pg "calendar.com/proto"
 )
 
 type HTTPHandlers struct {
-	*controller.Controller
+	*handler.Controller
 }
 
 type gRPCHandlers struct {
@@ -58,23 +58,30 @@ func (h *HTTPHandlers) NewRouter() *mux.Router {
 		fmt.Println("-----------------------------")
 		str := fmt.Sprintf("%s | %s\n", strings.Join(m, ","), t)
 		fmt.Println(str)
+
 		return nil
 	})
+
 	return r
 }
 
-func NewRouter() error {
+func NewRouter(ctx context.Context) error {
+	fmt.Println("grpc server")
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
 		return err
 	}
-	defer lis.Close()
+	go func() {
+		<-ctx.Done()
+		lis.Close()
+	}()
 
 	s := grpc.NewServer()
 	pg.RegisterCalendarServer(s, &gRPCHandlers{})
 	if err = s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve %v\n", lis.Addr())
 	}
+
 	return nil
 }
 
@@ -82,6 +89,6 @@ func (s *gRPCHandlers) Login(_ context.Context, _ *pg.Credentials) (*pg.Token, e
 	return &pg.Token{Token: "some token", ExpiresAt: 1234567890}, nil
 }
 
-func (h *HTTPHandlers) NewHandler(c controller.Controller) {
+func (h *HTTPHandlers) NewHandler(c handler.Controller) {
 	h.Controller = &c
 }

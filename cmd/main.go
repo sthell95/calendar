@@ -22,8 +22,8 @@ import (
 	"github.com/spf13/viper"
 
 	"calendar.com/config"
-	"calendar.com/pkg/controller"
 	"calendar.com/pkg/domain/service"
+	"calendar.com/pkg/handler"
 	"calendar.com/pkg/logger"
 )
 
@@ -65,16 +65,16 @@ func main() {
 	eventService := service.NewEventService(storageEventClient)
 	authService := service.NewAuthService(userRepository)
 
-	c := controller.NewController(eventService, authService)
+	c := handler.NewController(eventService, authService)
 	handlers := new(config.HTTPHandlers)
 	handlers.NewHandler(*c)
 
-	err = config.RunServer(ctx, handlers.NewRouter())
-	if err != nil {
-		logger.NewLogger().Write(logger.Error, err.Error(), "serve")
-	}
+	//err = config.RunServer(ctx, handlers.NewRouter())
+	//if err != nil {
+	//	logger.NewLogger().Write(logger.Error, err.Error(), "serve")
+	//}
 
-	err = config.NewRouter()
+	err = config.NewRouter(ctx)
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "serve")
 	}
