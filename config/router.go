@@ -17,8 +17,19 @@ import (
 	pg "calendar.com/proto"
 )
 
+type AuthRestHandler interface {
+	SignIn(http.ResponseWriter, *http.Request)
+}
+
+type EventRestHandler interface {
+	EventCreate(http.ResponseWriter, *http.Request)
+	EventUpdate(http.ResponseWriter, *http.Request)
+	EventDelete(http.ResponseWriter, *http.Request)
+}
+
 type HTTPHandlers struct {
-	*handler.Controller
+	AuthRestHandler
+	EventRestHandler
 }
 
 type gRPCHandlers struct {
@@ -40,14 +51,14 @@ func (h *HTTPHandlers) NewRouter() *mux.Router {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/login", h.SignIn).Methods(http.MethodPost)
-	r.HandleFunc("/health_checker", h.HealthHandler).Methods(http.MethodGet)
+	//r.HandleFunc("/health_checker", h.HealthHandler).Methods(http.MethodGet)
 
 	s := r.PathPrefix("/api").Subrouter()
 	e := s.PathPrefix("/events").Subrouter()
-	e.HandleFunc("/{id}", h.Update).Methods(http.MethodPut)
-	e.HandleFunc("/{id}", h.Delete).Methods(http.MethodDelete)
+	e.HandleFunc("/{id}", h.EventUpdate).Methods(http.MethodPut)
+	e.HandleFunc("/{id}", h.EventDelete).Methods(http.MethodDelete)
 	e.Use(middleware.Authorization)
-	e.HandleFunc("", h.Create).Methods(http.MethodPost)
+	e.HandleFunc("", h.EventCreate).Methods(http.MethodPost)
 
 	_ = r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
 		t, err := route.GetPathTemplate()

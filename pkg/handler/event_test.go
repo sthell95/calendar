@@ -91,7 +91,7 @@ func TestController_Create(t *testing.T) {
 				ctrl := gomock.NewController(t)
 				mock := service.NewMockEvent(ctrl)
 				event, _ := e.RequestToEntity(ctx)
-				mock.EXPECT().Create(gomock.Any(), event).Return(errors.New("Could not create event"))
+				mock.EXPECT().Create(gomock.Any(), event).Return(errors.New("Could not Create event"))
 
 				return mock
 			},
@@ -111,7 +111,7 @@ func TestController_Create(t *testing.T) {
 					Notes:       nil,
 				}
 			},
-			want: `{"message":"Could not create event"}`,
+			want: `{"message":"Could not Create event"}`,
 		},
 	}
 
@@ -456,7 +456,7 @@ func TestController_Delete(t *testing.T) {
 			mock: func(t *testing.T, e *entity.Event) service.Event {
 				ctrl := gomock.NewController(t)
 				mock := service.NewMockEvent(ctrl)
-				mock.EXPECT().Delete(gomock.Any(), e).Return(errors.New("Couldn't delete"))
+				mock.EXPECT().Delete(gomock.Any(), e).Return(errors.New("Couldn't Delete"))
 
 				return mock
 			},

@@ -1,12 +1,13 @@
 package handler
 
 import (
-	"calendar.com/pkg/domain/service"
 	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
+
+	"calendar.com/pkg/domain/service"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -48,13 +49,17 @@ type Event struct {
 
 type ErrorUserContext struct{}
 
-func (*ErrorUserContext) Error() string {
-	return "User does not exists in the context"
-}
-
 type ErrorUnhandledPathParameter struct {
 	Name  string
 	Value string
+}
+
+func NewEventOperations(s service.Event) *Event {
+	return &Event{s}
+}
+
+func (*ErrorUserContext) Error() string {
+	return "User does not exists in the context"
 }
 
 func (e ErrorUnhandledPathParameter) Error() string {
@@ -115,7 +120,7 @@ func (re *ResponseEvent) EntityToResponse(ctx context.Context, e entity.Event) {
 	}
 }
 
-func (c *Event) create(w http.ResponseWriter, r *http.Request) error {
+func (c *Event) Create(w http.ResponseWriter, r *http.Request) error {
 	span, ctx := opentracing.StartSpanFromContext(r.Context(), "create-event")
 	defer span.Finish()
 
@@ -150,7 +155,7 @@ func (c *Event) Update(w http.ResponseWriter, r *http.Request) {
 		logger.NewLogger().Write(logger.Error, ErrorUnhandledPathParameter{
 			Name:  "id",
 			Value: eventId,
-		}.Error(), "update-event")
+		}.Error(), "Update-event")
 		response.NewPrint().PrettyPrint(w, Error{Message: ErrorUnhandledPathParameter{
 			Name:  "id",
 			Value: eventId,
@@ -161,7 +166,7 @@ func (c *Event) Update(w http.ResponseWriter, r *http.Request) {
 	var event RequestEvent
 	err := json.NewDecoder(r.Body).Decode(&event)
 	if err != nil {
-		logger.NewLogger().Write(logger.Error, err.Error(), "update-event")
+		logger.NewLogger().Write(logger.Error, err.Error(), "Update-event")
 		response.NewPrint().PrettyPrint(w, Error{Message: err.Error()}, response.WithCode(http.StatusBadRequest))
 		return
 	}
@@ -170,14 +175,14 @@ func (c *Event) Update(w http.ResponseWriter, r *http.Request) {
 	ctx = context.WithValue(ctx, entity.EventIdKey, id)
 	entityEvent, err := event.RequestToEntity(ctx)
 	if err != nil {
-		logger.NewLogger().Write(logger.Error, err.Error(), "update-event")
+		logger.NewLogger().Write(logger.Error, err.Error(), "Update-event")
 		response.NewPrint().PrettyPrint(w, Error{Message: err.Error()}, response.WithCode(http.StatusBadRequest))
 		return
 	}
 
 	err = c.Event.Update(ctx, entityEvent)
 	if err != nil {
-		logger.NewLogger().Write(logger.Error, err.Error(), "update-event")
+		logger.NewLogger().Write(logger.Error, err.Error(), "Update-event")
 		response.NewPrint().PrettyPrint(w, Error{Message: err.Error()}, response.WithCode(http.StatusBadRequest))
 		return
 	}
@@ -187,7 +192,7 @@ func (c *Event) Update(w http.ResponseWriter, r *http.Request) {
 	response.NewPrint().PrettyPrint(w, re)
 }
 
-func (c *handler.Controller) Delete(w http.ResponseWriter, r *http.Request) {
+func (c *Event) Delete(w http.ResponseWriter, r *http.Request) {
 	span, ctx := opentracing.StartSpanFromContext(r.Context(), "delete-event")
 	span.SetTag("this", 999999999999)
 	defer span.Finish()
@@ -208,7 +213,7 @@ func (c *handler.Controller) Delete(w http.ResponseWriter, r *http.Request) {
 
 	userId := r.Context().Value(middleware.UserId).(uuid.UUID)
 	e := entity.Event{ID: id, User: entity.User{ID: userId}}
-	err = c.EventService.Delete(ctx, &e)
+	err = c.Event.Delete(ctx, &e)
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "delete-event")
 		response.NewPrint().PrettyPrint(w, Error{Message: err.Error()}, response.WithCode(http.StatusBadRequest))

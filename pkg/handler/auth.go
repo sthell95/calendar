@@ -1,13 +1,15 @@
 package handler
 
 import (
+	"context"
+	"encoding/json"
+	"io"
+
+	"github.com/opentracing/opentracing-go"
+
 	"calendar.com/pkg/domain/entity"
 	"calendar.com/pkg/domain/service"
 	"calendar.com/pkg/response"
-	"context"
-	"encoding/json"
-	"github.com/opentracing/opentracing-go"
-	"io"
 )
 
 type RequestCredentials struct {
@@ -22,6 +24,10 @@ type ResponseToken struct {
 
 type Auth struct {
 	service.Authorization
+}
+
+func NewAuthOperations(s service.Authorization) *Auth {
+	return &Auth{s}
 }
 
 func (c *Auth) SignIn(ctx context.Context, w io.Writer, r io.Reader) error {

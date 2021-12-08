@@ -7,6 +7,8 @@ import (
 	"os"
 	"os/signal"
 
+	"calendar.com/pkg/handler/rest"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
@@ -66,6 +68,10 @@ func main() {
 	authService := service.NewAuthService(userRepository)
 
 	c := handler.NewController(eventService, authService)
+	authOperation := handler.NewAuthOperations(authService)
+	eventOperations := handler.NewEventOperations(eventService)
+
+	restHandlers := rest.NewClient(authOperation, eventOperations)
 	handlers := new(config.HTTPHandlers)
 	handlers.NewHandler(*c)
 
