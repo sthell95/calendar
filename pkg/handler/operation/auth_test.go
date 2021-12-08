@@ -1,7 +1,8 @@
-package handler
+package operation
 
 import (
 	"bytes"
+	"calendar.com/pkg/handler"
 	"encoding/json"
 	"errors"
 	"io"
@@ -60,7 +61,7 @@ func TestController_SignIn(t *testing.T) {
 			requestBody, _ := json.Marshal(credentials)
 			r := httptest.NewRequest(http.MethodPost, "/login", bytes.NewReader(requestBody))
 
-			c := &Controller{
+			c := &handler.Controller{
 				EventService: nil,
 				AuthService:  mock,
 			}

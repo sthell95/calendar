@@ -13,7 +13,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"calendar.com/middleware"
-	"calendar.com/pkg/handler"
 	pg "calendar.com/proto"
 )
 
@@ -98,8 +97,4 @@ func NewRouter(ctx context.Context) error {
 
 func (s *gRPCHandlers) Login(_ context.Context, _ *pg.Credentials) (*pg.Token, error) {
 	return &pg.Token{Token: "some token", ExpiresAt: 1234567890}, nil
-}
-
-func (h *HTTPHandlers) NewHandler(c handler.Controller) {
-	h.Controller = &c
 }

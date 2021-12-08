@@ -1,6 +1,7 @@
 package main
 
 import (
+	"calendar.com/pkg/handler/operation"
 	"context"
 	"fmt"
 	"log"
@@ -67,13 +68,11 @@ func main() {
 	eventService := service.NewEventService(storageEventClient)
 	authService := service.NewAuthService(userRepository)
 
-	c := handler.NewController(eventService, authService)
-	authOperation := handler.NewAuthOperations(authService)
-	eventOperations := handler.NewEventOperations(eventService)
+	authOperation := operation.NewAuthOperations(authService)
+	eventOperations := operation.NewEventOperations(eventService)
 
 	restHandlers := rest.NewClient(authOperation, eventOperations)
 	handlers := new(config.HTTPHandlers)
-	handlers.NewHandler(*c)
 
 	//err = config.RunServer(ctx, handlers.NewRouter())
 	//if err != nil {

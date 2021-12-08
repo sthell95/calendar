@@ -1,22 +1,18 @@
-package handler
+package operation
 
 import (
+	"calendar.com/middleware"
+	"calendar.com/pkg/domain/entity"
+	"calendar.com/pkg/domain/service"
+	"calendar.com/pkg/response"
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
+	"github.com/opentracing/opentracing-go"
+	"io"
 	"net/http"
 	"time"
-
-	"calendar.com/pkg/domain/service"
-
-	"github.com/google/uuid"
-	"github.com/gorilla/mux"
-	"github.com/opentracing/opentracing-go"
-
-	"calendar.com/middleware"
-	"calendar.com/pkg/domain/entity"
-	"calendar.com/pkg/logger"
-	"calendar.com/pkg/response"
 )
 
 type EventHandler interface {
@@ -49,21 +45,12 @@ type Event struct {
 
 type ErrorUserContext struct{}
 
-type ErrorUnhandledPathParameter struct {
-	Name  string
-	Value string
-}
-
 func NewEventOperations(s service.Event) *Event {
 	return &Event{s}
 }
 
 func (*ErrorUserContext) Error() string {
 	return "User does not exists in the context"
-}
-
-func (e ErrorUnhandledPathParameter) Error() string {
-	return fmt.Sprintf("Not found parameter: %v, value: %v in request path", e.Name, e.Value)
 }
 
 func (re *RequestEvent) RequestToEntity(ctx context.Context) (*entity.Event, error) {
@@ -120,17 +107,17 @@ func (re *ResponseEvent) EntityToResponse(ctx context.Context, e entity.Event) {
 	}
 }
 
-func (c *Event) Create(w http.ResponseWriter, r *http.Request) error {
-	span, ctx := opentracing.StartSpanFromContext(r.Context(), "create-event")
+func (c *Event) Create(ctx context.Context, w io.Writer, r io.Reader) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "create-event")
 	defer span.Finish()
 
 	var event RequestEvent
-	err := json.NewDecoder(r.Body).Decode(&event)
+	err := json.NewDecoder(r).Decode(&event)
 	if err != nil {
 		return err
 	}
 
-	entityEvent, err := event.RequestToEntity(r.Context())
+	entityEvent, err := event.RequestToEntity(ctx)
 	if err != nil {
 		return err
 	}
@@ -146,79 +133,50 @@ func (c *Event) Create(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func (c *Event) Update(w http.ResponseWriter, r *http.Request) {
-	span, ctx := opentracing.StartSpanFromContext(r.Context(), "update-event")
+func (c *Event) Update(ctx context.Context, w io.Writer, r io.Reader, eventId string) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "update-event")
 	defer span.Finish()
 
-	eventId, ok := mux.Vars(r)["id"]
-	if !ok || eventId == "" {
-		logger.NewLogger().Write(logger.Error, ErrorUnhandledPathParameter{
-			Name:  "id",
-			Value: eventId,
-		}.Error(), "Update-event")
-		response.NewPrint().PrettyPrint(w, Error{Message: ErrorUnhandledPathParameter{
-			Name:  "id",
-			Value: eventId,
-		}.Error()}, response.WithCode(http.StatusBadRequest))
-		return
-	}
-
 	var event RequestEvent
-	err := json.NewDecoder(r.Body).Decode(&event)
+	err := json.NewDecoder(r).Decode(&event)
 	if err != nil {
-		logger.NewLogger().Write(logger.Error, err.Error(), "Update-event")
-		response.NewPrint().PrettyPrint(w, Error{Message: err.Error()}, response.WithCode(http.StatusBadRequest))
-		return
+		return err
 	}
 
 	id, err := uuid.Parse(eventId)
 	ctx = context.WithValue(ctx, entity.EventIdKey, id)
 	entityEvent, err := event.RequestToEntity(ctx)
 	if err != nil {
-		logger.NewLogger().Write(logger.Error, err.Error(), "Update-event")
-		response.NewPrint().PrettyPrint(w, Error{Message: err.Error()}, response.WithCode(http.StatusBadRequest))
-		return
+		return err
 	}
 
 	err = c.Event.Update(ctx, entityEvent)
 	if err != nil {
-		logger.NewLogger().Write(logger.Error, err.Error(), "Update-event")
-		response.NewPrint().PrettyPrint(w, Error{Message: err.Error()}, response.WithCode(http.StatusBadRequest))
-		return
+		return err
 	}
 
 	re := &ResponseEvent{}
 	re.EntityToResponse(ctx, *entityEvent)
 	response.NewPrint().PrettyPrint(w, re)
+	return nil
 }
 
-func (c *Event) Delete(w http.ResponseWriter, r *http.Request) {
-	span, ctx := opentracing.StartSpanFromContext(r.Context(), "delete-event")
+func (c *Event) Delete(ctx context.Context, _ io.Writer, eventId string) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "delete-event")
 	span.SetTag("this", 999999999999)
 	defer span.Finish()
 
-	eventId, ok := mux.Vars(r)["id"]
-	if !ok || eventId == "" {
-		logger.NewLogger().Write(logger.Error, ErrorUnhandledPathParameter{}.Error(), "delete-event")
-		response.NewPrint().PrettyPrint(w, Error{Message: ErrorUnhandledPathParameter{}.Error()}, response.WithCode(http.StatusBadRequest))
-		return
-	}
-
 	id, err := uuid.Parse(eventId)
 	if err != nil {
-		logger.NewLogger().Write(logger.Error, err.Error(), "delete-event")
-		response.NewPrint().PrettyPrint(w, Error{Message: err.Error()}, response.WithCode(http.StatusBadRequest))
-		return
+		return err
 	}
 
-	userId := r.Context().Value(middleware.UserId).(uuid.UUID)
+	userId := ctx.Value(middleware.UserId).(uuid.UUID)
 	e := entity.Event{ID: id, User: entity.User{ID: userId}}
 	err = c.Event.Delete(ctx, &e)
 	if err != nil {
-		logger.NewLogger().Write(logger.Error, err.Error(), "delete-event")
-		response.NewPrint().PrettyPrint(w, Error{Message: err.Error()}, response.WithCode(http.StatusBadRequest))
-		return
+		return err
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	return nil
 }

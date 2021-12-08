@@ -1,7 +1,8 @@
-package handler
+package operation
 
 import (
 	"bytes"
+	"calendar.com/pkg/handler"
 	"context"
 	"encoding/json"
 	"errors"
@@ -120,7 +121,7 @@ func TestController_Create(t *testing.T) {
 			event := tt.requestEvent()
 			ctx := tt.ctx()
 			eventService := tt.mock(t, event, ctx)
-			c := &Controller{EventService: eventService}
+			c := &handler.Controller{EventService: eventService}
 			w := httptest.NewRecorder()
 			body, _ := json.Marshal(event)
 
@@ -389,7 +390,7 @@ func TestController_Update(t *testing.T) {
 			event := tt.requestEvent()
 			ctx := tt.ctx()
 			eventService := tt.mock(t, event, ctx)
-			c := &Controller{EventService: eventService}
+			c := &handler.Controller{EventService: eventService}
 			w := httptest.NewRecorder()
 			body, _ := json.Marshal(event)
 			r := httptest.NewRequest(http.MethodPut, "/api/events/:id", bytes.NewReader(body))
@@ -480,7 +481,7 @@ func TestController_Delete(t *testing.T) {
 				User: entity.User{ID: ctx.Value(middleware.UserId).(uuid.UUID)},
 			}
 			eventService := tt.mock(t, &e)
-			c := &Controller{EventService: eventService}
+			c := &handler.Controller{EventService: eventService}
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest(http.MethodPut, "/api/events/:id", nil)
 			r = r.WithContext(ctx)
