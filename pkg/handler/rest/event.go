@@ -2,13 +2,14 @@ package rest
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
 	"io"
 	"net/http"
 
+	"github.com/gorilla/mux"
+
 	"calendar.com/pkg/logger"
-	"calendar.com/pkg/response"
 )
 
 type EventOperations interface {
@@ -46,11 +47,8 @@ func (c *Client) EventCreate(w http.ResponseWriter, r *http.Request) {
 	err := c.EventOperations.Create(r.Context(), w, r.Body)
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "event-create")
-		response.NewPrint().PrettyPrint(
-			w,
-			Error{Message: err.Error()},
-			response.WithCode(http.StatusBadRequest),
-		)
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(Error{Message: err.Error()})
 	}
 }
 
@@ -58,21 +56,15 @@ func (c *Client) EventUpdate(w http.ResponseWriter, r *http.Request) {
 	eventId, ok := mux.Vars(r)["id"]
 	if !ok || eventId == "" {
 		logger.NewLogger().Write(logger.Error, ErrorUnhandledPathParameter{Name: "id"}.Error(), "event-update")
-		response.NewPrint().PrettyPrint(
-			w,
-			Error{Message: ErrorUnhandledPathParameter{Name: "id"}.Error()},
-			response.WithCode(http.StatusBadRequest),
-		)
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(ErrorUnhandledPathParameter{Name: "id"})
 	}
 
 	err := c.EventOperations.Update(r.Context(), w, r.Body, eventId)
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "event-update")
-		response.NewPrint().PrettyPrint(
-			w,
-			Error{Message: err.Error()},
-			response.WithCode(http.StatusBadRequest),
-		)
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(Error{Message: err.Error()})
 	}
 }
 
@@ -80,20 +72,14 @@ func (c *Client) EventDelete(w http.ResponseWriter, r *http.Request) {
 	eventId, ok := mux.Vars(r)["id"]
 	if !ok || eventId == "" {
 		logger.NewLogger().Write(logger.Error, ErrorUnhandledPathParameter{Name: "id"}.Error(), "event-delete")
-		response.NewPrint().PrettyPrint(
-			w,
-			Error{Message: ErrorUnhandledPathParameter{Name: "id"}.Error()},
-			response.WithCode(http.StatusBadRequest),
-		)
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(Error{Message: ErrorUnhandledPathParameter{Name: "id"}.Error()})
 	}
 
 	err := c.EventOperations.Delete(r.Context(), w, eventId)
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "event-delete")
-		response.NewPrint().PrettyPrint(
-			w,
-			Error{Message: err.Error()},
-			response.WithCode(http.StatusBadRequest),
-		)
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(Error{Message: err.Error()})
 	}
 }

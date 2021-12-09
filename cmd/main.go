@@ -1,12 +1,13 @@
 package main
 
 import (
-	"calendar.com/pkg/handler/operation"
 	"context"
 	"fmt"
 	"log"
 	"os"
 	"os/signal"
+
+	"calendar.com/pkg/handler/operation"
 
 	"calendar.com/pkg/handler/rest"
 
@@ -26,7 +27,6 @@ import (
 
 	"calendar.com/config"
 	"calendar.com/pkg/domain/service"
-	"calendar.com/pkg/handler"
 	"calendar.com/pkg/logger"
 )
 
@@ -72,17 +72,22 @@ func main() {
 	eventOperations := operation.NewEventOperations(eventService)
 
 	restHandlers := rest.NewClient(authOperation, eventOperations)
-	handlers := new(config.HTTPHandlers)
 
-	//err = config.RunServer(ctx, handlers.NewRouter())
-	//if err != nil {
-	//	logger.NewLogger().Write(logger.Error, err.Error(), "serve")
-	//}
+	ctx, cancel = context.WithCancel(ctx)
+	go func() {
+		fmt.Println("qweqwewqe")
+		err = config.ServeGrpc(ctx)
+		if err != nil {
+			logger.NewLogger().Write(logger.Error, err.Error(), "serve")
+		}
+	}()
 
-	err = config.NewRouter(ctx)
+	router := config.NewHTTPRouter(restHandlers)
+	err = config.RunServer(ctx, router)
 	if err != nil {
 		logger.NewLogger().Write(logger.Error, err.Error(), "serve")
 	}
+
 }
 
 func initConfig() error {

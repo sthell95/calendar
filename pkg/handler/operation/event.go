@@ -1,23 +1,20 @@
 package operation
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/opentracing/opentracing-go"
+
 	"calendar.com/middleware"
 	"calendar.com/pkg/domain/entity"
 	"calendar.com/pkg/domain/service"
 	"calendar.com/pkg/response"
-	"context"
-	"encoding/json"
-	"fmt"
-	"github.com/google/uuid"
-	"github.com/opentracing/opentracing-go"
-	"io"
-	"net/http"
-	"time"
 )
-
-type EventHandler interface {
-	Create(w http.ResponseWriter, r *http.Request)
-}
 
 type RequestEvent struct {
 	ID          string   `json:"id"`

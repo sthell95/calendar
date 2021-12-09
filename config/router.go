@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"strings"
 
+	"calendar.com/pkg/handler/rest"
+
 	"google.golang.org/grpc"
 
 	"github.com/gorilla/mux"
@@ -26,11 +28,6 @@ type EventRestHandler interface {
 	EventDelete(http.ResponseWriter, *http.Request)
 }
 
-type HTTPHandlers struct {
-	AuthRestHandler
-	EventRestHandler
-}
-
 type gRPCHandlers struct {
 	pg.UnimplementedCalendarServer
 }
@@ -46,7 +43,7 @@ func RunServer(ctx context.Context, r *mux.Router) error {
 	return server.ListenAndServe()
 }
 
-func (h *HTTPHandlers) NewRouter() *mux.Router {
+func NewHTTPRouter(h *rest.Client) *mux.Router {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/login", h.SignIn).Methods(http.MethodPost)
@@ -75,7 +72,7 @@ func (h *HTTPHandlers) NewRouter() *mux.Router {
 	return r
 }
 
-func NewRouter(ctx context.Context) error {
+func ServeGrpc(ctx context.Context) error {
 	fmt.Println("grpc server")
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {

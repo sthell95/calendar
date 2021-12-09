@@ -1,7 +1,6 @@
 package response
 
 import (
-	"encoding/json"
 	"io"
 )
 
@@ -20,9 +19,9 @@ func (r *Resp) PrettyPrint(w io.Writer, o interface{}, i ...Options) {
 	//for key, value := range option.Headers {
 	//	w.Header().Set(key, value)
 	//}
-
+	//
 	//w.WriteHeader(option.Code)
-	_ = json.NewEncoder(w).Encode(o)
+	//_ = json.NewEncoder(w).Encode(o)
 }
 
 func NewPrint() Response {
