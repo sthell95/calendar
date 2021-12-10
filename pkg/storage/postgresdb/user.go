@@ -50,7 +50,7 @@ func (r *Client) FindOneByLogin(ctx context.Context, login string) (*entity.User
 	defer span.Finish()
 
 	var u entity.User
-	err := r.db.Table(userTable).Take(&u, struct{ login string }{login: login}).Error
+	err := r.db.Table(userTable).Where("login = " + login).First(&u).Error
 
 	return &u, err
 }

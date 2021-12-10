@@ -1,14 +1,8 @@
 package operation
 
 import (
-	"bytes"
-	"calendar.com/pkg/handler"
-	"encoding/json"
+	"context"
 	"errors"
-	"io"
-	"net/http"
-	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -24,11 +18,11 @@ func TestController_SignIn(t *testing.T) {
 		Password: "testtest",
 	}
 	tests := []struct {
-		name        string
-		authService *service.Authorization
-		mock        func(*service.MockAuthorization, entity.Credentials)
-		wantMessage string
-		wantCode    int
+		name           string
+		authService    *service.Authorization
+		mock           func(*service.MockAuthorization, entity.Credentials)
+		errorMessage   string
+		entityResponse *entity.AuthToken
 	}{
 		{
 			name: "Valid",
@@ -38,8 +32,11 @@ func TestController_SignIn(t *testing.T) {
 					ExpiresAt: 1,
 				}, nil).AnyTimes()
 			},
-			wantMessage: `{"token":"token","expires_at":1}`,
-			wantCode:    http.StatusOK,
+			errorMessage: "",
+			entityResponse: &entity.AuthToken{
+				Token:     "token",
+				ExpiresAt: 1,
+			},
 		},
 		{
 			name: "Invalid credentials",
@@ -47,8 +44,8 @@ func TestController_SignIn(t *testing.T) {
 				e := errors.New("Invalid credentials")
 				mock.EXPECT().SignInProcess(gomock.Any(), &creds).Return(nil, e).AnyTimes()
 			},
-			wantMessage: `{"message":"Invalid credentials"}`,
-			wantCode:    http.StatusBadRequest,
+			errorMessage:   "Invalid credentials",
+			entityResponse: nil,
 		},
 	}
 	for _, tt := range tests {
@@ -57,19 +54,11 @@ func TestController_SignIn(t *testing.T) {
 			mock := service.NewMockAuthorization(ctrl)
 			tt.mock(mock, credentials)
 
-			w := httptest.NewRecorder()
-			requestBody, _ := json.Marshal(credentials)
-			r := httptest.NewRequest(http.MethodPost, "/login", bytes.NewReader(requestBody))
+			c := NewAuthOperations(mock)
+			token, err := c.SignIn(context.Background(), &credentials)
 
-			c := &handler.Controller{
-				EventService: nil,
-				AuthService:  mock,
-			}
-			c.SignIn(w, r)
-			responseBody, _ := io.ReadAll(w.Body)
-			token := strings.Trim(string(responseBody), "\n")
-			require.Equal(t, w.Code, tt.wantCode)
-			require.Equal(t, token, tt.wantMessage)
+			require.Equal(t, tt.errorMessage, err.Error())
+			require.Equal(t, tt.entityResponse, token)
 		})
 	}
 }

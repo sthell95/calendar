@@ -15,6 +15,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"calendar.com/middleware"
+	rpc "calendar.com/pkg/handler/grpc"
 	pg "calendar.com/proto"
 )
 
@@ -26,10 +27,6 @@ type EventRestHandler interface {
 	EventCreate(http.ResponseWriter, *http.Request)
 	EventUpdate(http.ResponseWriter, *http.Request)
 	EventDelete(http.ResponseWriter, *http.Request)
-}
-
-type gRPCHandlers struct {
-	pg.UnimplementedCalendarServer
 }
 
 func RunServer(ctx context.Context, r *mux.Router) error {
@@ -72,26 +69,26 @@ func NewHTTPRouter(h *rest.Client) *mux.Router {
 	return r
 }
 
-func ServeGrpc(ctx context.Context) error {
+func ServeGrpc(ctx context.Context, ao rpc.AuthOperations, _ rpc.EventOperations) error {
 	fmt.Println("grpc server")
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
 		return err
 	}
+
 	go func() {
 		<-ctx.Done()
 		lis.Close()
 	}()
 
 	s := grpc.NewServer()
-	pg.RegisterCalendarServer(s, &gRPCHandlers{})
+	pg.RegisterAuthServiceServer(s, &rpc.AuthHandler{
+		AuthOperations: ao,
+	})
+
 	if err = s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve %v\n", lis.Addr())
 	}
 
 	return nil
-}
-
-func (s *gRPCHandlers) Login(_ context.Context, _ *pg.Credentials) (*pg.Token, error) {
-	return &pg.Token{Token: "some token", ExpiresAt: 1234567890}, nil
 }

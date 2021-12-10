@@ -2,7 +2,6 @@ package operation
 
 import (
 	"bytes"
-	"calendar.com/pkg/handler"
 	"context"
 	"encoding/json"
 	"errors"

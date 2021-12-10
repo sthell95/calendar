@@ -1,0 +1,33 @@
+syntax="proto3";
+
+package event;
+
+option go_package = "calendar.com/proto";
+
+service EventService {
+  rpc Create (Event) returns (Event) {}
+  rpc Update (Event) returns (Event) {}
+  rpc Delete (EventId) returns (DeleteResponse) {}
+}
+
+message Event {
+  optional string id = 1;
+  string title = 2;
+  string description = 3;
+  string timezone = 4;
+  string time = 5;
+  int64 duration = 6;
+  repeated Note notes = 7;
+}
+
+message Note {
+  string note = 1;
+}
+
+message EventId {
+  string id = 1;
+}
+
+message DeleteResponse {
+  bool result = 1;
+}

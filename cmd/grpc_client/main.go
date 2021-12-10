@@ -1,11 +1,13 @@
 package main
 
 import (
-	pg "calendar.com/proto"
 	"context"
-	"google.golang.org/grpc"
 	"log"
 	"time"
+
+	"google.golang.org/grpc"
+
+	pg "calendar.com/proto"
 )
 
 const address = "localhost:50051"
@@ -17,14 +19,14 @@ func main() {
 	}
 	defer conn.Close()
 
-	c := pg.NewCalendarClient(conn)
+	c := pg.NewAuthServiceClient(conn)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
 	token, err := c.Login(ctx, &pg.Credentials{
-		Login:    "test",
-		Password: "testtest",
+		Login: "test1123",
+		//Password: "testtest",
 	})
 	if err != nil {
 		panic(err.Error())

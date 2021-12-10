@@ -75,8 +75,7 @@ func main() {
 
 	ctx, cancel = context.WithCancel(ctx)
 	go func() {
-		fmt.Println("qweqwewqe")
-		err = config.ServeGrpc(ctx)
+		err = config.ServeGrpc(ctx, authOperation, eventOperations)
 		if err != nil {
 			logger.NewLogger().Write(logger.Error, err.Error(), "serve")
 		}
