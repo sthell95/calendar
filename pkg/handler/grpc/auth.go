@@ -11,6 +11,11 @@ type AuthOperations interface {
 	SignIn(ctx context.Context, credentials *entity.Credentials) (*entity.AuthToken, error)
 }
 
+type AuthHandler struct {
+	pg.UnimplementedAuthServiceServer
+	AuthOperations AuthOperations
+}
+
 func (h *AuthHandler) Login(ctx context.Context, c *pg.Credentials) (*pg.Token, error) {
 	entityCredentials := credentialsRequestToDomain(c)
 

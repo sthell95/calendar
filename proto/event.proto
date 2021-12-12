@@ -11,7 +11,7 @@ service EventService {
 }
 
 message Event {
-  optional string id = 1;
+  string id = 1;
   string title = 2;
   string description = 3;
   string timezone = 4;

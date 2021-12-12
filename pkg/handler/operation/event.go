@@ -104,30 +104,13 @@ func (re *ResponseEvent) EntityToResponse(ctx context.Context, e entity.Event) {
 	}
 }
 
-func (c *Event) Create(ctx context.Context, w io.Writer, r io.Reader) error {
-	span, ctx := opentracing.StartSpanFromContext(ctx, "create-event")
-	defer span.Finish()
-
-	var event RequestEvent
-	err := json.NewDecoder(r).Decode(&event)
+func (c *Event) Create(ctx context.Context, e *entity.Event) (*entity.Event, error) {
+	err := c.Event.Create(ctx, e)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	entityEvent, err := event.RequestToEntity(ctx)
-	if err != nil {
-		return err
-	}
-
-	err = c.Event.Create(ctx, entityEvent)
-	if err != nil {
-		return err
-	}
-
-	re := &ResponseEvent{}
-	re.EntityToResponse(ctx, *entityEvent)
-	response.NewPrint().PrettyPrint(w, re)
-	return nil
+	return e, nil
 }
 
 func (c *Event) Update(ctx context.Context, w io.Writer, r io.Reader, eventId string) error {
